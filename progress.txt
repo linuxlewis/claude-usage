@@ -10,7 +10,10 @@ Started: 2026-02-09T01:34:52.881Z
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
 - API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
 - The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
-- pbxproj IDs follow pattern: AA000007 for PBXBuildFile, AA100010 for PBXFileReference — increment from last used
+- pbxproj IDs follow pattern: AA000008 for PBXBuildFile, AA100011 for PBXFileReference — increment from last used
+- Avoid complex array concatenation expressions with optionals in Swift — the type checker will time out. Use compactMap or imperative append instead
+- UsageViewModel is the shared ObservableObject passed from ClaudeUsageApp to ContentView and future views
+- ContentView takes `@ObservedObject var viewModel: UsageViewModel` — all views that need usage data get it from viewModel
 - KeychainService uses service name "com.claudeusage.credentials" with account keys "sessionKey" and "orgId"
 - UsageService uses URLSession with dependency injection (pass custom session for testing)
 - Use URLProtocol subclass mock for testing URLSession-based network code — register via URLSessionConfiguration.ephemeral with protocolClasses
@@ -87,4 +90,19 @@ Started: 2026-02-09T01:34:52.881Z
   - StrokeStyle with lineCap: .round gives polished rounded ends on the progress arc
   - Making lineWidth proportional to size (size * 0.15) ensures the ring looks good at both 16x16 menu bar size and 32x32 popover size
   - Clamping percentage with min(max(percentage, 0), 100) prevents visual bugs from out-of-range values
+---
+
+## 2026-02-08 20:20 - US-006
+- What was implemented: Menu bar icon showing CircleProgress ring with highest utilization percentage and reset time in local timezone. Created UsageViewModel (ObservableObject) that computes highest utilization across all limits and formats reset time. Updated ClaudeUsageApp to use custom MenuBarExtra label with HStack of CircleProgress + Text. Updated ContentView to accept viewModel.
+- Files changed:
+  - ClaudeUsage/Models/UsageViewModel.swift (new - ObservableObject with highestUtilization, highestResetDate, resetTimeString)
+  - ClaudeUsage/ClaudeUsageApp.swift (updated - @StateObject viewModel, custom MenuBarExtra label with ring + time)
+  - ClaudeUsage/Views/ContentView.swift (updated - accepts @ObservedObject viewModel)
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added UsageViewModel.swift to project)
+  - prd.json (updated - US-006 passes: true)
+- **Learnings for future iterations:**
+  - Swift type checker times out on complex array concatenation with Optional.map — use compactMap or imperative loops instead
+  - MenuBarExtra label: closure supports SwiftUI views like HStack with CircleProgress and Text
+  - DateFormatter with "h:mm a" for time-only, "EEE h:mm a" for day+time — check Calendar.isDate(_:inSameDayAs:) to decide format
+  - UsageViewModel holds shared state (@Published usageData, lastUpdated, errorState) for use across menu bar label and popover
 ---

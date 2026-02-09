@@ -14,6 +14,7 @@
 		AA000005 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100008 /* KeychainService.swift */; };
 		AA000006 /* UsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100009 /* UsageService.swift */; };
 		AA000007 /* CircleProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100010 /* CircleProgress.swift */; };
+		AA000008 /* UsageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* UsageViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,6 +38,7 @@
 		AA100008 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		AA100009 /* UsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageService.swift; sourceTree = "<group>"; };
 		AA100010 /* CircleProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleProgress.swift; sourceTree = "<group>"; };
+		AA100011 /* UsageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageViewModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				AA100007 /* UsageData.swift */,
+				AA100011 /* UsageViewModel.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -197,6 +200,7 @@
 				AA000005 /* KeychainService.swift in Sources */,
 				AA000006 /* UsageService.swift in Sources */,
 				AA000007 /* CircleProgress.swift in Sources */,
+				AA000008 /* UsageViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -100,7 +100,7 @@
         "`xcodebuild build` passes"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "Use MenuBarExtra with .menuBarExtraStyle(.window) for the popover. The label shows the ring + time text."
     },
     {
