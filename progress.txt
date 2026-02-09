@@ -10,7 +10,7 @@ Started: 2026-02-09T01:34:52.881Z
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
 - API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
 - The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
-- pbxproj IDs follow pattern: AA000006 for PBXBuildFile, AA100009 for PBXFileReference — increment from last used
+- pbxproj IDs follow pattern: AA000007 for PBXBuildFile, AA100010 for PBXFileReference — increment from last used
 - KeychainService uses service name "com.claudeusage.credentials" with account keys "sessionKey" and "orgId"
 - UsageService uses URLSession with dependency injection (pass custom session for testing)
 - Use URLProtocol subclass mock for testing URLSession-based network code — register via URLSessionConfiguration.ephemeral with protocolClasses
@@ -74,4 +74,17 @@ Started: 2026-02-09T01:34:52.881Z
   - UsageService takes sessionKey, orgId, and URLSession as init params — URLSession defaults to .shared for production, test passes custom mock session
   - Set-Cookie header is accessed via allHeaderFields["Set-Cookie"] on HTTPURLResponse — note the key is case-sensitive when accessing via dictionary
   - fetchUsage() returns a tuple (UsageData, newSessionKey: String?) so callers can update Keychain when a new key is received
+---
+
+## 2026-02-08 20:17 - US-005
+- What was implemented: CircleProgress SwiftUI view component that draws a circular progress ring. Takes percentage (0-100) and optional size parameter. Ring fills proportionally via Circle().trim(). Color-coded: green (<50%), yellow (50-79%), red (>=80%). Background ring in gray at 0.2 opacity. Line width scales with size (15% of diameter) for consistent appearance at 16x16 and 32x32.
+- Files changed:
+  - ClaudeUsage/Views/CircleProgress.swift (new - reusable circular progress ring component)
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added CircleProgress.swift to project)
+  - prd.json (updated - US-005 passes: true)
+- **Learnings for future iterations:**
+  - Circle().trim(from:to:) draws clockwise from the "3 o'clock" position — use .rotationEffect(.degrees(-90)) to start from top
+  - StrokeStyle with lineCap: .round gives polished rounded ends on the progress arc
+  - Making lineWidth proportional to size (size * 0.15) ensures the ring looks good at both 16x16 menu bar size and 32x32 popover size
+  - Clamping percentage with min(max(percentage, 0), 100) prevents visual bugs from out-of-range values
 ---

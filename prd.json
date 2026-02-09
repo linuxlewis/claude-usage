@@ -84,7 +84,7 @@
         "`xcodebuild build` passes"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Use SwiftUI Circle().trim(from:to:) with .stroke() for the ring. Background ring in gray at ~0.2 opacity."
     },
     {
