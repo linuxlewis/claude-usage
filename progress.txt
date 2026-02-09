@@ -8,6 +8,9 @@ Started: 2026-02-09T01:34:52.881Z
 - Source files in ClaudeUsage/ directory, tests in ClaudeUsageTests/
 - When adding new .swift files, they must be added to the pbxproj file with PBXFileReference, PBXBuildFile, and added to the Sources build phase
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
+- API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
+- The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
+- pbxproj IDs follow pattern: AA000004 for PBXBuildFile, AA100007 for PBXFileReference — increment from last used
 
 ---
 
@@ -27,4 +30,18 @@ Started: 2026-02-09T01:34:52.881Z
   - The scheme file must reference the correct BlueprintIdentifier matching the PBXNativeTarget ID
   - macOS deployment target is set to 13.0 in both project and target build settings
   - Swift 6.2.1 is on this machine, but project uses SWIFT_VERSION = 5.0 for compatibility
+---
+
+## 2026-02-08 20:09 - US-002
+- What was implemented: UsageData and UsageLimit Codable models for decoding the claude.ai usage API response. All optional fields (seven_day_opus, seven_day_cowork, seven_day_oauth_apps, iguana_necktie, extra_usage) are Swift Optionals. Added 4 unit tests covering full response decoding, null optional fields, all fields present, and utilization value accuracy.
+- Files changed:
+  - ClaudeUsage/Models/UsageData.swift (new - UsageLimit and UsageData Codable models)
+  - ClaudeUsageTests/ClaudeUsageTests.swift (updated - added 4 JSON decoding tests)
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added UsageData.swift to project)
+  - prd.json (updated - US-002 passes: true)
+- **Learnings for future iterations:**
+  - API date format includes fractional seconds — need custom ISO8601 decoder with .withFractionalSeconds option
+  - XCTAssertEqual with accuracy: parameter requires non-optional Double — use force unwrap (!) for optional values in test assertions where the value is known to exist
+  - resets_at can be null even when the limit object itself is non-null (e.g. seven_day_sonnet with utilization 0.0)
+  - New .swift files need 4 pbxproj entries: PBXFileReference, PBXBuildFile, group children, and Sources build phase files
 ---
