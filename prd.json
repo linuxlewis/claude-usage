@@ -67,7 +67,7 @@
         "`xcodebuild test` passes"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Endpoint: GET https://claude.ai/api/organizations/{orgId}/usage. Headers: accept: */*, anthropic-client-platform: web_claude_ai, content-type: application/json. Cookie: sessionKey={key}"
     },
     {

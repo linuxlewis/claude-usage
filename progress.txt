@@ -10,8 +10,10 @@ Started: 2026-02-09T01:34:52.881Z
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
 - API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
 - The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
-- pbxproj IDs follow pattern: AA000005 for PBXBuildFile, AA100008 for PBXFileReference — increment from last used
+- pbxproj IDs follow pattern: AA000006 for PBXBuildFile, AA100009 for PBXFileReference — increment from last used
 - KeychainService uses service name "com.claudeusage.credentials" with account keys "sessionKey" and "orgId"
+- UsageService uses URLSession with dependency injection (pass custom session for testing)
+- Use URLProtocol subclass mock for testing URLSession-based network code — register via URLSessionConfiguration.ephemeral with protocolClasses
 
 ---
 
@@ -58,4 +60,18 @@ Started: 2026-02-09T01:34:52.881Z
   - Always delete before adding in Keychain to handle updates — SecItemAdd fails with errSecDuplicateItem if key already exists
   - @discardableResult on delete() is useful since callers often don't care about the delete result (e.g., when called as cleanup before save)
   - Security framework is available by default on macOS — no additional framework linking needed in pbxproj
+---
+
+## 2026-02-08 20:15 - US-004
+- What was implemented: UsageService struct that fetches usage data from the claude.ai API. Uses URLSession with sessionKey cookie and anthropic-client-platform header. Returns decoded UsageData plus optional new session key from Set-Cookie. Handles 401/403 as specific AuthError type. Added 5 unit tests using URLProtocol mock: request construction, JSON decoding, Set-Cookie parsing, 401 auth error, 403 auth error.
+- Files changed:
+  - ClaudeUsage/Services/UsageService.swift (new - API client with fetchUsage(), error types, Set-Cookie parsing)
+  - ClaudeUsageTests/ClaudeUsageTests.swift (updated - added UsageServiceTests class with 5 tests)
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added UsageService.swift to project)
+  - prd.json (updated - US-004 passes: true)
+- **Learnings for future iterations:**
+  - URLProtocol mock pattern: create a subclass with static requestHandler and capturedRequest, register via URLSessionConfiguration.ephemeral with protocolClasses
+  - UsageService takes sessionKey, orgId, and URLSession as init params — URLSession defaults to .shared for production, test passes custom mock session
+  - Set-Cookie header is accessed via allHeaderFields["Set-Cookie"] on HTTPURLResponse — note the key is case-sensitive when accessing via dictionary
+  - fetchUsage() returns a tuple (UsageData, newSessionKey: String?) so callers can update Keychain when a new key is received
 ---
