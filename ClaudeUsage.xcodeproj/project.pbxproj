@@ -11,6 +11,7 @@
 		AA000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100002 /* ContentView.swift */; };
 		AA000003 /* ClaudeUsageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100003 /* ClaudeUsageTests.swift */; };
 		AA000004 /* UsageData.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100007 /* UsageData.swift */; };
+		AA000005 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100008 /* KeychainService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +32,7 @@
 		AA100005 /* ClaudeUsage.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClaudeUsage.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA100006 /* ClaudeUsageTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ClaudeUsageTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA100007 /* UsageData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageData.swift; sourceTree = "<group>"; };
+		AA100008 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -108,6 +110,7 @@
 		AA600007 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				AA100008 /* KeychainService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -185,6 +188,7 @@
 				AA000001 /* ClaudeUsageApp.swift in Sources */,
 				AA000002 /* ContentView.swift in Sources */,
 				AA000004 /* UsageData.swift in Sources */,
+				AA000005 /* KeychainService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

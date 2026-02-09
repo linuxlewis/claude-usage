@@ -10,7 +10,8 @@ Started: 2026-02-09T01:34:52.881Z
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
 - API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
 - The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
-- pbxproj IDs follow pattern: AA000004 for PBXBuildFile, AA100007 for PBXFileReference — increment from last used
+- pbxproj IDs follow pattern: AA000005 for PBXBuildFile, AA100008 for PBXFileReference — increment from last used
+- KeychainService uses service name "com.claudeusage.credentials" with account keys "sessionKey" and "orgId"
 
 ---
 
@@ -44,4 +45,17 @@ Started: 2026-02-09T01:34:52.881Z
   - XCTAssertEqual with accuracy: parameter requires non-optional Double — use force unwrap (!) for optional values in test assertions where the value is known to exist
   - resets_at can be null even when the limit object itself is non-null (e.g. seven_day_sonnet with utilization 0.0)
   - New .swift files need 4 pbxproj entries: PBXFileReference, PBXBuildFile, group children, and Sources build phase files
+---
+
+## 2026-02-08 20:12 - US-003
+- What was implemented: KeychainService struct with static methods for saving, reading, and deleting session key and org ID from macOS Keychain. Uses Security framework (SecItemAdd, SecItemCopyMatching, SecItemDelete) with service name "com.claudeusage.credentials".
+- Files changed:
+  - ClaudeUsage/Services/KeychainService.swift (new - Keychain CRUD operations)
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added KeychainService.swift to project)
+  - prd.json (updated - US-003 passes: true)
+- **Learnings for future iterations:**
+  - Keychain operations are hard to unit test in CI (require entitlements and user keychain access), so build-only verification is sufficient
+  - Always delete before adding in Keychain to handle updates — SecItemAdd fails with errSecDuplicateItem if key already exists
+  - @discardableResult on delete() is useful since callers often don't care about the delete result (e.g., when called as cleanup before save)
+  - Security framework is available by default on macOS — no additional framework linking needed in pbxproj
 ---

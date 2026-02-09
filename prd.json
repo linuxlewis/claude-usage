@@ -48,7 +48,7 @@
         "`xcodebuild build` passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Use Security framework directly (SecItemAdd, SecItemCopyMatching, etc). Service name: 'com.claudeusage.credentials'. Keychain tests are hard to unit test in CI so build-only check is fine."
     },
     {
