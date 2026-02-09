@@ -7,10 +7,38 @@ class UsageViewModel: ObservableObject {
     @Published var errorState: ErrorState?
     @Published var refreshRequested = false
     @Published var settingsRequested = false
+    @Published var authStatus: AuthStatus = .notConfigured
 
     enum ErrorState {
         case authExpired
         case networkError
+    }
+
+    enum AuthStatus {
+        case connected
+        case expired
+        case notConfigured
+    }
+
+    init() {
+        updateAuthStatus()
+    }
+
+    func updateAuthStatus() {
+        let hasKey = KeychainService.read(key: .sessionKey) != nil
+        let hasOrg = KeychainService.read(key: .orgId) != nil
+        if hasKey && hasOrg {
+            if errorState == .authExpired {
+                authStatus = .expired
+            } else if usageData != nil {
+                authStatus = .connected
+            } else {
+                // Credentials exist but haven't verified yet
+                authStatus = .notConfigured
+            }
+        } else {
+            authStatus = .notConfigured
+        }
     }
 
     /// Returns the highest utilization percentage across all non-nil limits.

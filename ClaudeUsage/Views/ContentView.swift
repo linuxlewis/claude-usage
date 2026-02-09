@@ -4,6 +4,14 @@ struct ContentView: View {
     @ObservedObject var viewModel: UsageViewModel
 
     var body: some View {
+        if viewModel.settingsRequested {
+            SettingsView(viewModel: viewModel)
+        } else {
+            usageContent
+        }
+    }
+
+    private var usageContent: some View {
         VStack(spacing: 0) {
             if viewModel.usageData != nil {
                 VStack(spacing: 16) {
@@ -48,6 +56,9 @@ struct ContentView: View {
                         .font(.headline)
                     Text("Not configured")
                         .foregroundColor(.secondary)
+                    Button("Open Settings") {
+                        viewModel.settingsRequested = true
+                    }
                 }
                 .padding()
             }

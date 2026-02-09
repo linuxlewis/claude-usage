@@ -10,7 +10,7 @@ Started: 2026-02-09T01:34:52.881Z
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
 - API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
 - The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
-- pbxproj IDs follow pattern: AA000009 for PBXBuildFile, AA100012 for PBXFileReference — increment from last used
+- pbxproj IDs follow pattern: AA000010 for PBXBuildFile, AA100013 for PBXFileReference — increment from last used
 - Avoid complex array concatenation expressions with optionals in Swift — the type checker will time out. Use compactMap or imperative append instead
 - UsageViewModel is the shared ObservableObject passed from ClaudeUsageApp to ContentView and future views
 - ContentView takes `@ObservedObject var viewModel: UsageViewModel` — all views that need usage data get it from viewModel
@@ -120,4 +120,20 @@ Started: 2026-02-09T01:34:52.881Z
   - ForEach with enumerated() and id: \.offset works for iterating tuples that aren't Identifiable
   - UsageBar reuses the same color logic as CircleProgress for consistent color-coding across ring and bar
   - refreshRequested/settingsRequested as @Published Bool flags on viewModel allow child views to signal actions to parent
+---
+
+## 2026-02-08 20:26 - US-008
+- What was implemented: Settings view accessible from the popover via gear icon. Contains a SecureField for session key, TextField for org ID, Save and Test Connection buttons, and auth status indicator (connected/expired/not configured). SettingsView uses KeychainService to load/save credentials and UsageService to test the connection. Added AuthStatus enum and updateAuthStatus() to UsageViewModel. Updated ContentView to toggle between usage view and settings view based on settingsRequested flag. Added "Open Settings" button to the "Not configured" state.
+- Files changed:
+  - ClaudeUsage/Views/SettingsView.swift (new - settings UI with auth fields, test connection, status)
+  - ClaudeUsage/Views/ContentView.swift (updated - toggles between usage and settings views)
+  - ClaudeUsage/Models/UsageViewModel.swift (updated - added AuthStatus enum, updateAuthStatus())
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added SettingsView.swift to project)
+  - prd.json (updated - US-008 passes: true)
+- **Learnings for future iterations:**
+  - Use @State for local form inputs in settings, load from Keychain in .onAppear
+  - SettingsView takes @ObservedObject viewModel to share auth status with the rest of the app
+  - SwiftUI SecureField works well for session key entry — same API as TextField
+  - Test connection creates a temporary UsageService with the input values, not the saved ones
+  - Back navigation is done by toggling viewModel.settingsRequested = false
 ---

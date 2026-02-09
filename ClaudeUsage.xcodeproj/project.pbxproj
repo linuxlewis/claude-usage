@@ -16,6 +16,7 @@
 		AA000007 /* CircleProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100010 /* CircleProgress.swift */; };
 		AA000008 /* UsageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* UsageViewModel.swift */; };
 		AA000009 /* UsageBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100012 /* UsageBar.swift */; };
+		AA000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100013 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,6 +42,7 @@
 		AA100010 /* CircleProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CircleProgress.swift; sourceTree = "<group>"; };
 		AA100011 /* UsageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageViewModel.swift; sourceTree = "<group>"; };
 		AA100012 /* UsageBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageBar.swift; sourceTree = "<group>"; };
+		AA100013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +107,7 @@
 				AA100002 /* ContentView.swift */,
 				AA100010 /* CircleProgress.swift */,
 				AA100012 /* UsageBar.swift */,
+				AA100013 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -205,6 +208,7 @@
 				AA000007 /* CircleProgress.swift in Sources */,
 				AA000008 /* UsageViewModel.swift in Sources */,
 				AA000009 /* UsageBar.swift in Sources */,
+				AA000010 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
