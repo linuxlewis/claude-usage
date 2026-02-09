@@ -5,6 +5,8 @@ class UsageViewModel: ObservableObject {
     @Published var usageData: UsageData?
     @Published var lastUpdated: Date?
     @Published var errorState: ErrorState?
+    @Published var refreshRequested = false
+    @Published var settingsRequested = false
 
     enum ErrorState {
         case authExpired
@@ -62,5 +64,36 @@ class UsageViewModel: ObservableObject {
             formatter.dateFormat = "EEE h:mm a"
             return formatter.string(from: resetDate)
         }
+    }
+
+    /// Returns a human-readable string for how long ago data was last updated.
+    var lastUpdatedString: String {
+        guard let lastUpdated = lastUpdated else { return "Never" }
+        let seconds = Int(Date().timeIntervalSince(lastUpdated))
+        if seconds < 60 {
+            return "Just now"
+        } else if seconds < 3600 {
+            let minutes = seconds / 60
+            return "\(minutes)m ago"
+        } else {
+            let hours = seconds / 3600
+            return "\(hours)h ago"
+        }
+    }
+
+    /// Collects all non-nil limits with display names for use in the popover.
+    var displayLimits: [(name: String, limit: UsageLimit)] {
+        guard let data = usageData else { return [] }
+        var results: [(name: String, limit: UsageLimit)] = [
+            ("Session", data.fiveHour),
+            ("Weekly", data.sevenDay),
+        ]
+        if let s = data.sevenDaySonnet { results.append(("Sonnet", s)) }
+        if let o = data.sevenDayOpus { results.append(("Opus", o)) }
+        if let oa = data.sevenDayOauthApps { results.append(("OAuth Apps", oa)) }
+        if let c = data.sevenDayCowork { results.append(("Cowork", c)) }
+        if let i = data.iguanaNecktie { results.append(("Other", i)) }
+        if let e = data.extraUsage { results.append(("Extra Usage", e)) }
+        return results
     }
 }

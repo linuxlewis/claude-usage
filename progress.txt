@@ -10,7 +10,7 @@ Started: 2026-02-09T01:34:52.881Z
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
 - API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
 - The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
-- pbxproj IDs follow pattern: AA000008 for PBXBuildFile, AA100011 for PBXFileReference — increment from last used
+- pbxproj IDs follow pattern: AA000009 for PBXBuildFile, AA100012 for PBXFileReference — increment from last used
 - Avoid complex array concatenation expressions with optionals in Swift — the type checker will time out. Use compactMap or imperative append instead
 - UsageViewModel is the shared ObservableObject passed from ClaudeUsageApp to ContentView and future views
 - ContentView takes `@ObservedObject var viewModel: UsageViewModel` — all views that need usage data get it from viewModel
@@ -105,4 +105,19 @@ Started: 2026-02-09T01:34:52.881Z
   - MenuBarExtra label: closure supports SwiftUI views like HStack with CircleProgress and Text
   - DateFormatter with "h:mm a" for time-only, "EEE h:mm a" for day+time — check Calendar.isDate(_:inSameDayAs:) to decide format
   - UsageViewModel holds shared state (@Published usageData, lastUpdated, errorState) for use across menu bar label and popover
+---
+
+## 2026-02-08 20:23 - US-007
+- What was implemented: Usage popover with all limits displayed. Created UsageBar component showing name, circular ring, percentage, horizontal progress bar, and reset time. Updated ContentView to iterate over all non-nil limits using a new displayLimits computed property on UsageViewModel. Added "Updated X ago" footer with refresh and settings buttons. Added lastUpdatedString, displayLimits, refreshRequested, and settingsRequested to UsageViewModel.
+- Files changed:
+  - ClaudeUsage/Views/UsageBar.swift (new - single usage bar component with ring, bar, and reset time)
+  - ClaudeUsage/Views/ContentView.swift (updated - full popover with ForEach over displayLimits, footer with refresh/settings)
+  - ClaudeUsage/Models/UsageViewModel.swift (updated - added lastUpdatedString, displayLimits, refreshRequested, settingsRequested)
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added UsageBar.swift to project)
+  - prd.json (updated - US-007 passes: true)
+- **Learnings for future iterations:**
+  - Use GeometryReader for horizontal progress bars to get parent width for proportional fill
+  - ForEach with enumerated() and id: \.offset works for iterating tuples that aren't Identifiable
+  - UsageBar reuses the same color logic as CircleProgress for consistent color-coding across ring and bar
+  - refreshRequested/settingsRequested as @Published Bool flags on viewModel allow child views to signal actions to parent
 ---
