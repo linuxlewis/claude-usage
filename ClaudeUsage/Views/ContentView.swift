@@ -4,11 +4,19 @@ struct ContentView: View {
     @ObservedObject var viewModel: UsageViewModel
 
     var body: some View {
-        if viewModel.settingsRequested {
-            SettingsView(viewModel: viewModel)
-        } else {
-            usageContent
-        }
+        usageContent
+    }
+
+    private func openSettings() {
+        let settingsView = SettingsView(viewModel: viewModel)
+        let hostingController = NSHostingController(rootView: settingsView)
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "Claude Usage Settings"
+        window.styleMask = [.titled, .closable]
+        window.setContentSize(NSSize(width: 360, height: 420))
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     private var usageContent: some View {
@@ -25,7 +33,7 @@ struct ContentView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                     Button("Open Settings") {
-                        viewModel.settingsRequested = true
+                        openSettings()
                     }
                 }
                 .padding()
@@ -66,9 +74,17 @@ struct ContentView: View {
                     .buttonStyle(.borderless)
 
                     Button(action: {
-                        viewModel.settingsRequested = true
+                        openSettings()
                     }) {
                         Image(systemName: "gearshape")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.borderless)
+
+                    Button(action: {
+                        NSApplication.shared.terminate(nil)
+                    }) {
+                        Image(systemName: "power")
                             .font(.system(size: 12))
                     }
                     .buttonStyle(.borderless)
@@ -82,7 +98,7 @@ struct ContentView: View {
                     Text("Not configured")
                         .foregroundColor(.secondary)
                     Button("Open Settings") {
-                        viewModel.settingsRequested = true
+                        openSettings()
                     }
                 }
                 .padding()

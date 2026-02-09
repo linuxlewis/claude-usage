@@ -4,12 +4,25 @@ import Security
 struct KeychainService {
     private static let serviceName = "com.claudeusage.credentials"
 
+    // In-memory cache to avoid repeated keychain access (which triggers password prompts)
+    private static var cache: [String: String] = [:]
+
     enum KeychainKey: String {
         case sessionKey = "sessionKey"
         case orgId = "orgId"
     }
 
+    @discardableResult
     static func save(key: KeychainKey, value: String) -> Bool {
+        // Update cache
+        cache[key.rawValue] = value
+
+        // Org ID isn't secret — store in UserDefaults
+        if key == .orgId {
+            UserDefaults.standard.set(value, forKey: "claude_org_id")
+            return true
+        }
+
         guard let data = value.data(using: .utf8) else { return false }
 
         // Delete any existing item first
@@ -20,6 +33,7 @@ struct KeychainService {
             kSecAttrService as String: serviceName,
             kSecAttrAccount as String: key.rawValue,
             kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
         ]
 
         let status = SecItemAdd(query as CFDictionary, nil)
@@ -27,6 +41,18 @@ struct KeychainService {
     }
 
     static func read(key: KeychainKey) -> String? {
+        // Check cache first
+        if let cached = cache[key.rawValue] {
+            return cached
+        }
+
+        // Org ID from UserDefaults
+        if key == .orgId {
+            let value = UserDefaults.standard.string(forKey: "claude_org_id")
+            if let value { cache[key.rawValue] = value }
+            return value
+        }
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -42,11 +68,21 @@ struct KeychainService {
             return nil
         }
 
-        return String(data: data, encoding: .utf8)
+        let value = String(data: data, encoding: .utf8)
+        if let value { cache[key.rawValue] = value }
+        return value
     }
 
     @discardableResult
     static func delete(key: KeychainKey) -> Bool {
+        // Clear cache
+        cache.removeValue(forKey: key.rawValue)
+
+        if key == .orgId {
+            UserDefaults.standard.removeObject(forKey: "claude_org_id")
+            return true
+        }
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,

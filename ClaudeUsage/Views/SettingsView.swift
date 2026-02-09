@@ -17,20 +17,8 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Button(action: {
-                    viewModel.settingsRequested = false
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 12))
-                }
-                .buttonStyle(.borderless)
-
-                Text("Settings")
-                    .font(.headline)
-
-                Spacer()
-            }
+            Text("Claude Usage Settings")
+                .font(.headline)
 
             // Auth status
             HStack(spacing: 6) {

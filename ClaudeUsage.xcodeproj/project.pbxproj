@@ -17,6 +17,7 @@
 		AA000008 /* UsageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* UsageViewModel.swift */; };
 		AA000009 /* UsageBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100012 /* UsageBar.swift */; };
 		AA000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100013 /* SettingsView.swift */; };
+		AA000030 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100030 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,6 +44,7 @@
 		AA100011 /* UsageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageViewModel.swift; sourceTree = "<group>"; };
 		AA100012 /* UsageBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageBar.swift; sourceTree = "<group>"; };
 		AA100013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA100030 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				AA100001 /* ClaudeUsageApp.swift */,
+				AA100030 /* Assets.xcassets */,
 				AA600005 /* Views */,
 				AA600006 /* Models */,
 				AA600007 /* Services */,
@@ -137,6 +140,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AA700001 /* Build configuration list for PBXNativeTarget "ClaudeUsage" */;
 			buildPhases = (
+				AA300030 /* Resources */,
 				AA800001 /* Sources */,
 				AA500001 /* Frameworks */,
 			);
@@ -194,6 +198,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AA300030 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA000030 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		AA800001 /* Sources */ = {

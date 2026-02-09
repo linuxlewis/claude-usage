@@ -3,7 +3,6 @@ import SwiftUI
 @main
 struct ClaudeUsageApp: App {
     @StateObject private var viewModel = UsageViewModel()
-
     private var menuBarText: String {
         let pct = Int(viewModel.highestUtilization)
         let resetDate: Date? = viewModel.usageData?.fiveHour.resetsAt ?? viewModel.usageData?.sevenDay.resetsAt
@@ -20,8 +19,8 @@ struct ClaudeUsageApp: App {
             ContentView(viewModel: viewModel)
         } label: {
             HStack(spacing: 3) {
-                Image(systemName: "sparkle")
-                    .font(.system(size: 11))
+                Image("MenuBarIcon")
+                    .renderingMode(.template)
                 Text(menuBarText)
                     .font(.system(size: 11, weight: .medium))
             }
