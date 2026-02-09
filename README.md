@@ -25,9 +25,8 @@ You need two things from claude.ai:
 4. Copy the `sessionKey` value (starts with `sk-ant-sid`)
 
 **Organization ID:**
-1. In the same Developer Tools, go to **Console**
-2. Run: `(await (await fetch('/api/organizations')).json())[0].uuid`
-3. Copy the UUID
+1. In the same cookies list, find the `lastActiveOrg` cookie
+2. Copy its value — that's your org ID
 
 Paste both into the Settings panel and you're good to go.
 
