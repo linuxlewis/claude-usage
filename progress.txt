@@ -1,0 +1,30 @@
+# Ralph Progress Log
+Started: 2026-02-09T01:34:52.881Z
+
+## Codebase Patterns
+- Use Xcode project (not SPM) since MenuBarExtra requires app bundle with Info.plist
+- Build command: `xcodebuild -scheme ClaudeUsage -destination 'platform=macOS' build`
+- Test command: `xcodebuild test -scheme ClaudeUsage -destination 'platform=macOS'`
+- Source files in ClaudeUsage/ directory, tests in ClaudeUsageTests/
+- When adding new .swift files, they must be added to the pbxproj file with PBXFileReference, PBXBuildFile, and added to the Sources build phase
+- Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
+
+---
+
+## 2026-02-08 20:06 - US-001
+- What was implemented: Xcode project scaffold with SwiftUI MenuBarExtra app, Info.plist with LSUIElement=true, and XCTest target
+- Files changed:
+  - ClaudeUsage.xcodeproj/project.pbxproj (new - Xcode project definition)
+  - ClaudeUsage.xcodeproj/xcshareddata/xcschemes/ClaudeUsage.xcscheme (new - shared scheme)
+  - ClaudeUsage/ClaudeUsageApp.swift (new - SwiftUI @main app with MenuBarExtra)
+  - ClaudeUsage/Views/ContentView.swift (new - placeholder popover content)
+  - ClaudeUsage/Info.plist (new - app metadata with LSUIElement=true)
+  - ClaudeUsageTests/ClaudeUsageTests.swift (new - basic test target)
+  - CLAUDE.md (updated - corrected build commands and directory paths)
+- **Learnings for future iterations:**
+  - MenuBarExtra requires an app bundle, so SPM executable won't work — must use Xcode project
+  - pbxproj uses unique IDs (AA000001 format used here) — new files need entries in PBXFileReference, PBXBuildFile, and the relevant PBXSourcesBuildPhase
+  - The scheme file must reference the correct BlueprintIdentifier matching the PBXNativeTarget ID
+  - macOS deployment target is set to 13.0 in both project and target build settings
+  - Swift 6.2.1 is on this machine, but project uses SWIFT_VERSION = 5.0 for compatibility
+---

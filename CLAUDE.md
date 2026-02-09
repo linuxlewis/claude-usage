@@ -7,19 +7,18 @@ See SPEC.md for full specification and prd.json for user stories.
 ## Tech Stack
 - Swift + SwiftUI
 - macOS 13+ (MenuBarExtra)
-- Swift Package Manager (no Xcode project needed)
+- Xcode project (MenuBarExtra requires app bundle)
 - URLSession for networking
 - Keychain for secure storage
 
 ## Build & Test
 ```bash
-swift build          # Build the app
-swift test           # Run unit tests
-swift build -j 1     # If memory constrained (first build is slow ~170s)
+xcodebuild -scheme ClaudeUsage -destination 'platform=macOS' build    # Build the app
+xcodebuild test -scheme ClaudeUsage -destination 'platform=macOS'     # Run unit tests
 ```
 
 ## Key Architecture Decisions
-- SPM executable target, NOT an Xcode project
+- Xcode project with ClaudeUsage app target and ClaudeUsageTests test target
 - MenuBarExtra with .menuBarExtraStyle(.window) for popover
 - LSUIElement=true (no dock icon) — set via Info.plist in bundle
 - Session key stored in macOS Keychain (Security framework)
@@ -34,7 +33,7 @@ swift build -j 1     # If memory constrained (first build is slow ~170s)
 
 ## Conventions
 - Keep files small and focused
-- Models in Sources/Models/
-- Views in Sources/Views/
-- Services in Sources/Services/
-- Tests in Tests/
+- Models in ClaudeUsage/Models/
+- Views in ClaudeUsage/Views/
+- Services in ClaudeUsage/Services/
+- Tests in ClaudeUsageTests/

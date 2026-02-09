@@ -15,7 +15,7 @@
         "App target is macOS 13+"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Use Xcode project (not SPM) since MenuBarExtra requires app bundle. Use `xcodebuild -scheme ClaudeUsage -destination 'platform=macOS' build` to verify builds. Use `xcodebuild test -scheme ClaudeUsage -destination 'platform=macOS'` for tests."
     },
     {
