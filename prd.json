@@ -1,0 +1,176 @@
+{
+  "project": "ClaudeUsage",
+  "branchName": "ralph/claude-usage-menubar",
+  "description": "A native macOS menu bar app that displays Claude.ai subscription usage limits. Shows a circular progress ring with color coding and reset times. Polls the claude.ai usage API with session cookie auth.",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Swift Package scaffold with build and test",
+      "description": "Create a new macOS app project using Swift Package Manager. Set up the basic app structure with a SwiftUI App entry point, MenuBarExtra, and an XCTest target. The app should compile and launch as a menu bar-only app (no dock icon).",
+      "acceptanceCriteria": [
+        "Project builds with `swift build`",
+        "Test target exists and `swift test` passes",
+        "App uses SwiftUI App lifecycle with MenuBarExtra",
+        "Info.plist sets LSUIElement=true (no dock icon)",
+        "App target is macOS 13+"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Use Xcode project (not SPM) since MenuBarExtra requires app bundle. Use `xcodebuild -scheme ClaudeUsage -destination 'platform=macOS' build` to verify builds. Use `xcodebuild test -scheme ClaudeUsage -destination 'platform=macOS'` for tests."
+    },
+    {
+      "id": "US-002",
+      "title": "Usage data model with JSON decoding",
+      "description": "Create Codable Swift models that decode the claude.ai usage API response. Handle nullable fields gracefully (seven_day_opus, seven_day_cowork, etc. can be null).",
+      "acceptanceCriteria": [
+        "UsageData model decodes the full API response JSON",
+        "Nullable fields (seven_day_opus, seven_day_cowork, seven_day_oauth_apps, extra_usage, iguana_necktie) are Optional",
+        "UsageLimit model has utilization (Double) and resets_at (Date?)",
+        "Unit test decodes sample JSON with all fields present",
+        "Unit test decodes sample JSON with null optional fields",
+        "Unit test verifies utilization values are correct",
+        "`xcodebuild test` passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Sample JSON: {\"five_hour\":{\"utilization\":17.0,\"resets_at\":\"2026-02-08T18:59:59.661633+00:00\"},\"seven_day\":{\"utilization\":11.0,\"resets_at\":\"2026-02-14T16:59:59.661657+00:00\"},\"seven_day_oauth_apps\":null,\"seven_day_opus\":null,\"seven_day_sonnet\":{\"utilization\":0.0,\"resets_at\":null},\"seven_day_cowork\":null,\"iguana_necktie\":null,\"extra_usage\":null}"
+    },
+    {
+      "id": "US-003",
+      "title": "Keychain service for session key storage",
+      "description": "Create a KeychainService that securely stores and retrieves the session key and org ID in the macOS Keychain. This avoids storing secrets in UserDefaults or plain text.",
+      "acceptanceCriteria": [
+        "KeychainService can save a session key string",
+        "KeychainService can read back the saved session key",
+        "KeychainService can save and read org ID",
+        "KeychainService can delete stored credentials",
+        "KeychainService handles 'not found' gracefully (returns nil)",
+        "`xcodebuild build` passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Use Security framework directly (SecItemAdd, SecItemCopyMatching, etc). Service name: 'com.claudeusage.credentials'. Keychain tests are hard to unit test in CI so build-only check is fine."
+    },
+    {
+      "id": "US-004",
+      "title": "Usage API client",
+      "description": "Create a UsageService that fetches usage data from the claude.ai API. Uses URLSession with the sessionKey cookie. Handles Set-Cookie responses to update the stored session key if rotated.",
+      "acceptanceCriteria": [
+        "UsageService.fetchUsage() returns decoded UsageData",
+        "Request includes sessionKey as a cookie header",
+        "Request includes anthropic-client-platform header",
+        "Handles HTTP 401/403 with a specific AuthError type",
+        "Parses Set-Cookie response header for sessionKey updates",
+        "Unit test verifies request construction using URLProtocol mock",
+        "Unit test verifies JSON decoding from mock response",
+        "Unit test verifies Set-Cookie parsing extracts new session key",
+        "`xcodebuild test` passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Endpoint: GET https://claude.ai/api/organizations/{orgId}/usage. Headers: accept: */*, anthropic-client-platform: web_claude_ai, content-type: application/json. Cookie: sessionKey={key}"
+    },
+    {
+      "id": "US-005",
+      "title": "Circular progress ring component",
+      "description": "Create a reusable SwiftUI CircleProgress view that draws a circular ring showing utilization percentage. Color-coded: green (<50%), yellow (50-79%), red (>=80%).",
+      "acceptanceCriteria": [
+        "CircleProgress view takes a percentage (0-100) parameter",
+        "Ring fills proportionally to the percentage",
+        "Green color when < 50%",
+        "Yellow color when 50-79%",
+        "Red color when >= 80%",
+        "Works at small sizes (16x16 for menu bar) and larger (32x32 for popover)",
+        "`xcodebuild build` passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "Use SwiftUI Circle().trim(from:to:) with .stroke() for the ring. Background ring in gray at ~0.2 opacity."
+    },
+    {
+      "id": "US-006",
+      "title": "Menu bar icon with progress ring and reset time",
+      "description": "Show the CircleProgress ring in the menu bar alongside the reset time in the user's local timezone. Display the highest utilization across all limits.",
+      "acceptanceCriteria": [
+        "Menu bar shows circular progress ring",
+        "Ring reflects the highest current utilization (session or weekly)",
+        "Reset time shown next to ring in local timezone (e.g. '11:00 PM')",
+        "If reset is on a different day, includes day (e.g. 'Sat 10:59 AM')",
+        "Updates when new data is fetched",
+        "`xcodebuild build` passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "Use MenuBarExtra with .menuBarExtraStyle(.window) for the popover. The label shows the ring + time text."
+    },
+    {
+      "id": "US-007",
+      "title": "Usage popover with all limits",
+      "description": "When clicking the menu bar icon, show a popover with all usage limits. Each limit shows a name, circular ring, percentage, horizontal bar, and reset time in local timezone.",
+      "acceptanceCriteria": [
+        "Popover shows Session (five_hour) limit with bar and reset time",
+        "Popover shows Weekly (seven_day) limit with bar and reset time",
+        "Popover shows Sonnet limit if present (non-null)",
+        "Popover shows Opus limit if present (non-null)",
+        "Null limits are hidden (not shown)",
+        "Each bar is color-coded matching the circle ring colors",
+        "Reset times are in user's local timezone",
+        "Shows 'Updated X ago' timestamp at bottom",
+        "Has a refresh button",
+        "`xcodebuild build` passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Settings view for auth configuration",
+      "description": "Create a settings view accessible from the popover. User can enter their session key and org ID. Values are stored in Keychain. Shows connection status.",
+      "acceptanceCriteria": [
+        "Settings view has a text field for session key (secure/password field)",
+        "Settings view has a text field for org ID",
+        "Save button stores values to Keychain via KeychainService",
+        "Test connection button hits the API and shows success/failure",
+        "Shows current auth status (connected, expired, not configured)",
+        "Gear icon in popover opens settings",
+        "`xcodebuild build` passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Automatic polling with timer",
+      "description": "Poll the usage API every 5 minutes automatically. Update the menu bar icon and popover data when new results arrive. Handle errors gracefully.",
+      "acceptanceCriteria": [
+        "App polls usage API every 5 minutes after initial fetch",
+        "Menu bar icon updates with new data after each poll",
+        "Popover data updates if open during a poll",
+        "Network errors show error state on icon (exclamation mark)",
+        "Auth errors (401/403) show expired state and prompt to re-auth",
+        "Manual refresh button triggers immediate poll",
+        "If Set-Cookie returns new sessionKey, Keychain is updated",
+        "`xcodebuild build` passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "Use Timer.publish or async Task.sleep for polling interval."
+    },
+    {
+      "id": "US-010",
+      "title": "Launch at login",
+      "description": "Add a toggle in settings to launch the app at login using SMAppService (macOS 13+).",
+      "acceptanceCriteria": [
+        "Settings has a 'Launch at Login' toggle",
+        "Toggle uses SMAppService.mainApp to register/unregister",
+        "Toggle reflects current registration state on load",
+        "`xcodebuild build` passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "Import ServiceManagement. SMAppService.mainApp.register() / unregister()."
+    }
+  ]
+}
