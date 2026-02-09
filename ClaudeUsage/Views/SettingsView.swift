@@ -129,6 +129,7 @@ struct SettingsView: View {
         KeychainService.save(key: .sessionKey, value: sessionKeyInput)
         KeychainService.save(key: .orgId, value: orgIdInput)
         viewModel.updateAuthStatus()
+        viewModel.startPollingIfConfigured()
         testResult = nil
     }
 

@@ -155,7 +155,7 @@
         "`xcodebuild build` passes"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": "Use Timer.publish or async Task.sleep for polling interval."
     },
     {

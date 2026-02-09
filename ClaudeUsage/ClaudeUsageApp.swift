@@ -9,7 +9,17 @@ struct ClaudeUsageApp: App {
             ContentView(viewModel: viewModel)
         } label: {
             HStack(spacing: 4) {
-                CircleProgress(percentage: viewModel.highestUtilization, size: 16)
+                if viewModel.errorState == .authExpired {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.red)
+                } else if viewModel.errorState == .networkError {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.orange)
+                } else {
+                    CircleProgress(percentage: viewModel.highestUtilization, size: 16)
+                }
                 if !viewModel.resetTimeString.isEmpty {
                     Text(viewModel.resetTimeString)
                         .font(.system(size: 11))

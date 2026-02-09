@@ -9,7 +9,7 @@ class UsageViewModel: ObservableObject {
     @Published var settingsRequested = false
     @Published var authStatus: AuthStatus = .notConfigured
 
-    enum ErrorState {
+    enum ErrorState: Equatable {
         case authExpired
         case networkError
     }
@@ -20,8 +20,28 @@ class UsageViewModel: ObservableObject {
         case notConfigured
     }
 
+    private let pollingInterval: TimeInterval = 300 // 5 minutes
+    private var pollingTask: Task<Void, Never>?
+    private var cancellables = Set<AnyCancellable>()
+
     init() {
         updateAuthStatus()
+
+        // Watch for refresh requests
+        $refreshRequested
+            .filter { $0 }
+            .sink { [weak self] _ in
+                self?.refreshRequested = false
+                self?.fetchNow()
+            }
+            .store(in: &cancellables)
+
+        // Start polling if credentials exist
+        startPollingIfConfigured()
+    }
+
+    deinit {
+        pollingTask?.cancel()
     }
 
     func updateAuthStatus() {
@@ -38,6 +58,76 @@ class UsageViewModel: ObservableObject {
             }
         } else {
             authStatus = .notConfigured
+        }
+    }
+
+    /// Starts polling if credentials are available. Call after saving new credentials.
+    func startPollingIfConfigured() {
+        pollingTask?.cancel()
+
+        guard let sessionKey = KeychainService.read(key: .sessionKey),
+              let orgId = KeychainService.read(key: .orgId),
+              !sessionKey.isEmpty, !orgId.isEmpty else {
+            return
+        }
+
+        pollingTask = Task { [weak self] in
+            guard let self = self else { return }
+            // Initial fetch
+            await self.performFetch(sessionKey: sessionKey, orgId: orgId)
+
+            // Polling loop
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: UInt64(self.pollingInterval * 1_000_000_000))
+                if Task.isCancelled { break }
+                // Re-read credentials in case they were updated
+                guard let currentKey = KeychainService.read(key: .sessionKey),
+                      let currentOrg = KeychainService.read(key: .orgId) else {
+                    break
+                }
+                await self.performFetch(sessionKey: currentKey, orgId: currentOrg)
+            }
+        }
+    }
+
+    /// Triggers an immediate fetch outside the polling cycle.
+    func fetchNow() {
+        guard let sessionKey = KeychainService.read(key: .sessionKey),
+              let orgId = KeychainService.read(key: .orgId),
+              !sessionKey.isEmpty, !orgId.isEmpty else {
+            return
+        }
+
+        Task { [weak self] in
+            await self?.performFetch(sessionKey: sessionKey, orgId: orgId)
+        }
+    }
+
+    @MainActor
+    private func performFetch(sessionKey: String, orgId: String) async {
+        let service = UsageService(sessionKey: sessionKey, orgId: orgId)
+        do {
+            let (data, newKey) = try await service.fetchUsage()
+
+            // Update Keychain if a new session key was returned via Set-Cookie
+            if let newKey = newKey {
+                KeychainService.save(key: .sessionKey, value: newKey)
+            }
+
+            usageData = data
+            lastUpdated = Date()
+            errorState = nil
+            authStatus = .connected
+        } catch let error as UsageServiceError {
+            switch error {
+            case .authError:
+                errorState = .authExpired
+                authStatus = .expired
+            default:
+                errorState = .networkError
+            }
+        } catch {
+            errorState = .networkError
         }
     }
 

@@ -13,7 +13,23 @@ struct ContentView: View {
 
     private var usageContent: some View {
         VStack(spacing: 0) {
-            if viewModel.usageData != nil {
+            if viewModel.errorState == .authExpired {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.red)
+                    Text("Session Expired")
+                        .font(.headline)
+                    Text("Your session key has expired. Please update it in settings.")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    Button("Open Settings") {
+                        viewModel.settingsRequested = true
+                    }
+                }
+                .padding()
+            } else if viewModel.usageData != nil {
                 VStack(spacing: 16) {
                     ForEach(Array(viewModel.displayLimits.enumerated()), id: \.offset) { _, item in
                         UsageBar(name: item.name, limit: item.limit)
@@ -26,14 +42,23 @@ struct ContentView: View {
                 Divider()
 
                 HStack {
-                    Text("Updated \(viewModel.lastUpdatedString)")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+                    if viewModel.errorState == .networkError {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(.orange)
+                        Text("Network error")
+                            .font(.system(size: 11))
+                            .foregroundColor(.orange)
+                    } else {
+                        Text("Updated \(viewModel.lastUpdatedString)")
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
 
                     Spacer()
 
                     Button(action: {
-                        viewModel.refreshRequested = true
+                        viewModel.fetchNow()
                     }) {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: 12))

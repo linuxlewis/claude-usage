@@ -8,6 +8,8 @@ Started: 2026-02-09T01:34:52.881Z
 - Source files in ClaudeUsage/ directory, tests in ClaudeUsageTests/
 - When adding new .swift files, they must be added to the pbxproj file with PBXFileReference, PBXBuildFile, and added to the Sources build phase
 - Info.plist is at ClaudeUsage/Info.plist with LSUIElement=true for menu bar-only app
+- UsageViewModel.startPollingIfConfigured() must be called after saving new credentials to restart the polling loop
+- ErrorState must be Equatable to use == in SwiftUI view conditionals (e.g. `if viewModel.errorState == .authExpired`)
 - API dates use ISO8601 with fractional seconds (e.g. "2026-02-08T18:59:59.661633+00:00") — use custom dateDecodingStrategy with ISO8601DateFormatter(.withFractionalSeconds) and fallback
 - The usage API response has `resets_at` as a nullable Date string even within non-null limit objects (e.g. seven_day_sonnet can have utilization: 0.0 with resets_at: null)
 - pbxproj IDs follow pattern: AA000010 for PBXBuildFile, AA100013 for PBXFileReference — increment from last used
@@ -136,4 +138,21 @@ Started: 2026-02-09T01:34:52.881Z
   - SwiftUI SecureField works well for session key entry — same API as TextField
   - Test connection creates a temporary UsageService with the input values, not the saved ones
   - Back navigation is done by toggling viewModel.settingsRequested = false
+---
+
+## 2026-02-08 20:28 - US-009
+- What was implemented: Automatic polling with 5-minute interval using async Task.sleep. UsageViewModel now has startPollingIfConfigured() that launches a polling loop, performFetch() that calls UsageService and updates state, and fetchNow() for manual refresh. Error states (auth expired, network error) are shown in both the menu bar icon and the popover. Auth errors (401/403) show a red exclamation circle and prompt to re-auth. Network errors show an orange warning triangle. Set-Cookie session key updates are saved to Keychain automatically. SettingsView calls startPollingIfConfigured() after saving credentials to restart the polling loop.
+- Files changed:
+  - ClaudeUsage/Models/UsageViewModel.swift (updated - added polling logic, performFetch, fetchNow, startPollingIfConfigured, made ErrorState Equatable)
+  - ClaudeUsage/ClaudeUsageApp.swift (updated - menu bar label shows error state icons for auth expired and network error)
+  - ClaudeUsage/Views/ContentView.swift (updated - popover shows auth expired state with re-auth prompt, network error in footer, refresh calls fetchNow() directly)
+  - ClaudeUsage/Views/SettingsView.swift (updated - calls startPollingIfConfigured() after saving credentials)
+  - prd.json (updated - US-009 passes: true)
+- **Learnings for future iterations:**
+  - Use async Task.sleep(nanoseconds:) for polling intervals — cleaner than Timer.publish in a Combine-less context
+  - performFetch must be @MainActor since it updates @Published properties
+  - Re-read credentials from Keychain on each poll iteration in case they were updated by Set-Cookie or settings
+  - ErrorState needs Equatable conformance for SwiftUI conditional checks (== operator)
+  - Cancel the previous pollingTask before starting a new one in startPollingIfConfigured() to avoid multiple concurrent loops
+  - ContentView refresh button should call fetchNow() directly instead of toggling a Bool flag — simpler and more reliable
 ---
