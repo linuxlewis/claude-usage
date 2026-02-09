@@ -18,6 +18,7 @@ Started: 2026-02-09T01:34:52.881Z
 - ContentView takes `@ObservedObject var viewModel: UsageViewModel` — all views that need usage data get it from viewModel
 - KeychainService uses service name "com.claudeusage.credentials" with account keys "sessionKey" and "orgId"
 - UsageService uses URLSession with dependency injection (pass custom session for testing)
+- SMAppService (macOS 13+) for Launch at Login: register()/unregister() throw, check status == .enabled for current state
 - Use URLProtocol subclass mock for testing URLSession-based network code — register via URLSessionConfiguration.ephemeral with protocolClasses
 
 ---
@@ -155,4 +156,16 @@ Started: 2026-02-09T01:34:52.881Z
   - ErrorState needs Equatable conformance for SwiftUI conditional checks (== operator)
   - Cancel the previous pollingTask before starting a new one in startPollingIfConfigured() to avoid multiple concurrent loops
   - ContentView refresh button should call fetchNow() directly instead of toggling a Bool flag — simpler and more reliable
+---
+
+## 2026-02-08 20:31 - US-010
+- What was implemented: Launch at Login toggle in Settings view using SMAppService (macOS 13+). Added a Toggle that calls SMAppService.mainApp.register()/unregister(). The toggle reflects the current registration state on load by checking SMAppService.mainApp.status == .enabled. If registration fails, the toggle reverts.
+- Files changed:
+  - ClaudeUsage/Views/SettingsView.swift (updated - added import ServiceManagement, launchAtLogin @State, Toggle with onChange handler, onAppear status check)
+  - prd.json (updated - US-010 passes: true)
+- **Learnings for future iterations:**
+  - SMAppService is available in macOS 13+ via `import ServiceManagement` — no framework linking needed in pbxproj
+  - SMAppService.mainApp.register() and .unregister() both throw — wrap in do/catch and revert toggle state on failure
+  - Check current state with SMAppService.mainApp.status == .enabled in onAppear to reflect actual registration state
+  - No new files needed — the toggle fits naturally in the existing SettingsView
 ---

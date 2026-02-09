@@ -1,4 +1,5 @@
 import SwiftUI
+import ServiceManagement
 
 struct SettingsView: View {
     @ObservedObject var viewModel: UsageViewModel
@@ -6,6 +7,7 @@ struct SettingsView: View {
     @State private var orgIdInput = ""
     @State private var isTesting = false
     @State private var testResult: TestResult?
+    @State private var launchAtLogin = false
 
     enum TestResult {
         case success
@@ -100,12 +102,31 @@ struct SettingsView: View {
                 }
                 .font(.system(size: 11))
             }
+
+            Divider()
+
+            // Launch at Login
+            Toggle("Launch at Login", isOn: $launchAtLogin)
+                .font(.system(size: 12))
+                .onChange(of: launchAtLogin) { newValue in
+                    do {
+                        if newValue {
+                            try SMAppService.mainApp.register()
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
+                    } catch {
+                        // Revert toggle if registration fails
+                        launchAtLogin = !newValue
+                    }
+                }
         }
         .padding(16)
         .frame(width: 280)
         .onAppear {
             sessionKeyInput = KeychainService.read(key: .sessionKey) ?? ""
             orgIdInput = KeychainService.read(key: .orgId) ?? ""
+            launchAtLogin = SMAppService.mainApp.status == .enabled
         }
     }
 
