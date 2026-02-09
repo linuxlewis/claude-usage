@@ -4,26 +4,26 @@ import SwiftUI
 struct ClaudeUsageApp: App {
     @StateObject private var viewModel = UsageViewModel()
 
+    private var menuBarText: String {
+        let pct = Int(viewModel.highestUtilization)
+        let resetDate: Date? = viewModel.usageData?.fiveHour.resetsAt ?? viewModel.usageData?.sevenDay.resetsAt
+        if let date = resetDate {
+            let fmt = DateFormatter()
+            fmt.dateFormat = "h:mm a"
+            return "\(pct)% · \(fmt.string(from: date))"
+        }
+        return "\(pct)%"
+    }
+
     var body: some Scene {
         MenuBarExtra {
             ContentView(viewModel: viewModel)
         } label: {
-            HStack(spacing: 4) {
-                if viewModel.errorState == .authExpired {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.red)
-                } else if viewModel.errorState == .networkError {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.orange)
-                } else {
-                    CircleProgress(percentage: viewModel.highestUtilization, size: 16)
-                }
-                if !viewModel.resetTimeString.isEmpty {
-                    Text(viewModel.resetTimeString)
-                        .font(.system(size: 11))
-                }
+            HStack(spacing: 3) {
+                Image(systemName: "sparkle")
+                    .font(.system(size: 11))
+                Text(menuBarText)
+                    .font(.system(size: 11, weight: .medium))
             }
         }
         .menuBarExtraStyle(.window)
