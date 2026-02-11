@@ -4,8 +4,8 @@ import SwiftUI
 struct ClaudeUsageApp: App {
     @StateObject private var viewModel = UsageViewModel()
     private var menuBarText: String {
-        let pct = Int(viewModel.highestUtilization)
-        let resetDate: Date? = viewModel.usageData?.fiveHour.resetsAt ?? viewModel.usageData?.sevenDay.resetsAt
+        let pct = Int(viewModel.usageData?.fiveHour.utilization ?? 0)
+        let resetDate: Date? = viewModel.usageData?.fiveHour.resetsAt
         if let date = resetDate {
             let fmt = DateFormatter()
             fmt.dateFormat = "h:mm a"
