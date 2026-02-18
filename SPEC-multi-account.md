@@ -81,7 +81,7 @@ When multiple accounts exist, add an account selector at the top of the popover,
 │  Weekly     ████░░░░░░ 40%  │
 │  ...                        │
 ├─────────────────────────────┤
-│  Updated 2m ago   ⟳ ⚙ + ⏻  │
+│  + Updated 2m ago   ⟳ ⚙ ⏻  │
 └─────────────────────────────┘
 ```
 
