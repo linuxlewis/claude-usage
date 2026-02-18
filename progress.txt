@@ -23,6 +23,7 @@ Started: 2026-02-09T01:34:52.881Z
 - AccountStore manages multi-account state: accounts array, activeAccountId, persistence to UserDefaults (metadata) + Keychain (secrets scoped by "{accountId}-sessionKey")
 - UsageViewModel takes AccountStore in init and subscribes to accountStore.$activeAccountId for automatic polling restart on account switch
 - ContentView and SettingsView both accept @ObservedObject accountStore — passed down from ClaudeUsageApp through ContentView
+- SettingsView loads/saves credentials via accountStore.sessionKey(for:)/saveSessionKey(_:for:) — never use old single-account KeychainService directly for credential I/O
 - Account struct in Models/Account.swift, AccountStore in Services/AccountStore.swift
 - KeychainService multi-account methods use accountId parameter: save(key:accountId:value:), read(key:accountId:), delete(key:accountId:)
 
@@ -246,4 +247,16 @@ Started: 2026-02-09T01:34:52.881Z
   - .popover(isPresented:) attached directly to the button that triggers it positions the popover correctly near the button
   - .keyboardShortcut(.defaultAction) on the Add button allows Enter key to submit
   - Extracting the toolbar HStack into a separate computed property keeps usageContent cleaner
+---
+
+## 2026-02-17 - US-007 (Settings scoped to active account)
+- What was implemented: Updated SettingsView to be fully scoped to the active account. Header shows active account email from viewModel.activeEmail. Session key and org ID fields load/save via accountStore.sessionKey(for:)/accountStore.saveSessionKey(_:for:) and accountStore.orgId(for:)/accountStore.saveOrgId(_:for:) instead of old single-account KeychainService methods. Added Accounts section at bottom listing all accounts with delete (trash) buttons. Delete is disabled when only one account remains. Deleting the active account triggers AccountStore's auto-switch to the next available account, then reloads credentials.
+- Files changed:
+  - ClaudeUsage/Views/SettingsView.swift (updated - active account email header, account-scoped load/save, accounts list with delete buttons)
+  - prd.json (updated - US-007 passes: true)
+- **Learnings for future iterations:**
+  - loadActiveAccountCredentials() helper consolidates credential loading and should be called on appear and after account deletion
+  - Accounts list section only shown when count > 1 (no point showing single account management)
+  - Delete button disabled via .disabled(accountStore.accounts.count <= 1) to prevent deleting the last account
+  - Test runner hangs for MenuBarExtra apps — build/typecheck verification is sufficient for CI
 ---

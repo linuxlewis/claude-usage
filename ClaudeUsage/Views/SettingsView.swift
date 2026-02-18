@@ -19,8 +19,16 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Claude Usage Settings")
-                .font(.headline)
+            // Header with active account email
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Claude Usage Settings")
+                    .font(.headline)
+                if let email = viewModel.activeEmail {
+                    Text(email)
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+            }
 
             // Auth status
             HStack(spacing: 6) {
@@ -120,20 +128,62 @@ struct SettingsView: View {
                             try SMAppService.mainApp.unregister()
                         }
                     } catch {
-                        // Revert toggle if registration fails
                         launchAtLogin = !newValue
                     }
                 }
+
+            // Accounts list
+            if accountStore.accounts.count > 1 {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Accounts")
+                        .font(.system(size: 12, weight: .medium))
+
+                    ForEach(accountStore.accounts) { account in
+                        HStack {
+                            Text(account.email)
+                                .font(.system(size: 12))
+                            if account.id == accountStore.activeAccountId {
+                                Text("(active)")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button(action: {
+                                accountStore.remove(id: account.id)
+                                loadActiveAccountCredentials()
+                            }) {
+                                Image(systemName: "trash")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.borderless)
+                            .disabled(accountStore.accounts.count <= 1)
+                        }
+                    }
+                }
+            }
         }
         .padding(16)
         .frame(width: 280)
         .onAppear {
-            sessionKeyInput = KeychainService.read(key: .sessionKey) ?? ""
-            orgIdInput = KeychainService.read(key: .orgId) ?? ""
+            loadActiveAccountCredentials()
             let savedFormat = UserDefaults.standard.string(forKey: "claude_time_display_format") ?? TimeDisplayFormat.resetTime.rawValue
             timeDisplayFormat = TimeDisplayFormat(rawValue: savedFormat) ?? .resetTime
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
+    }
+
+    private func loadActiveAccountCredentials() {
+        guard let accountId = accountStore.activeAccountId else {
+            sessionKeyInput = ""
+            orgIdInput = ""
+            return
+        }
+        sessionKeyInput = accountStore.sessionKey(for: accountId) ?? ""
+        orgIdInput = accountStore.orgId(for: accountId) ?? ""
+        testResult = nil
     }
 
     private var authStatusColor: Color {
@@ -153,8 +203,9 @@ struct SettingsView: View {
     }
 
     private func saveCredentials() {
-        KeychainService.save(key: .sessionKey, value: sessionKeyInput)
-        KeychainService.save(key: .orgId, value: orgIdInput)
+        guard let accountId = accountStore.activeAccountId else { return }
+        accountStore.saveSessionKey(sessionKeyInput, for: accountId)
+        accountStore.saveOrgId(orgIdInput, for: accountId)
         UserDefaults.standard.set(timeDisplayFormat.rawValue, forKey: "claude_time_display_format")
         viewModel.updateAuthStatus()
         viewModel.startPollingIfConfigured()
@@ -171,7 +222,9 @@ struct SettingsView: View {
             do {
                 let (_, newKey) = try await service.fetchUsage()
                 if let newKey = newKey {
-                    KeychainService.save(key: .sessionKey, value: newKey)
+                    if let accountId = accountStore.activeAccountId {
+                        accountStore.saveSessionKey(newKey, for: accountId)
+                    }
                     await MainActor.run {
                         sessionKeyInput = newKey
                     }
