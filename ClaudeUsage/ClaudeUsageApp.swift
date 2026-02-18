@@ -23,7 +23,7 @@ struct ClaudeUsageApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            ContentView(viewModel: viewModel)
+            ContentView(viewModel: viewModel, accountStore: accountStore)
         } label: {
             HStack(spacing: 3) {
                 Image("MenuBarIcon")

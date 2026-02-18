@@ -2,13 +2,14 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var viewModel: UsageViewModel
+    @ObservedObject var accountStore: AccountStore
 
     var body: some View {
         usageContent
     }
 
     private func openSettings() {
-        let settingsView = SettingsView(viewModel: viewModel)
+        let settingsView = SettingsView(viewModel: viewModel, accountStore: accountStore)
         let hostingController = NSHostingController(rootView: settingsView)
         let window = NSWindow(contentViewController: hostingController)
         window.title = "Claude Usage Settings"

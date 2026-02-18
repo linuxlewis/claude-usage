@@ -3,6 +3,7 @@ import ServiceManagement
 
 struct SettingsView: View {
     @ObservedObject var viewModel: UsageViewModel
+    @ObservedObject var accountStore: AccountStore
     @State private var sessionKeyInput = ""
     @State private var orgIdInput = ""
     @State private var timeDisplayFormat = TimeDisplayFormat.resetTime

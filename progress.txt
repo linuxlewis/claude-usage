@@ -22,6 +22,7 @@ Started: 2026-02-09T01:34:52.881Z
 - Use URLProtocol subclass mock for testing URLSession-based network code — register via URLSessionConfiguration.ephemeral with protocolClasses
 - AccountStore manages multi-account state: accounts array, activeAccountId, persistence to UserDefaults (metadata) + Keychain (secrets scoped by "{accountId}-sessionKey")
 - UsageViewModel takes AccountStore in init and subscribes to accountStore.$activeAccountId for automatic polling restart on account switch
+- ContentView and SettingsView both accept @ObservedObject accountStore — passed down from ClaudeUsageApp through ContentView
 - Account struct in Models/Account.swift, AccountStore in Services/AccountStore.swift
 - KeychainService multi-account methods use accountId parameter: save(key:accountId:value:), read(key:accountId:), delete(key:accountId:)
 
@@ -211,4 +212,16 @@ Started: 2026-02-09T01:34:52.881Z
   - ClaudeUsageApp needs custom init() to share a single AccountStore between @StateObject properties
   - performFetch now takes accountId parameter to scope Set-Cookie key updates to the correct account
   - SettingsView still uses old KeychainService directly — will need updating in US-007
+---
+
+## 2026-02-17 - US-004 (App entry point wiring)
+- What was implemented: Updated ContentView and SettingsView to accept AccountStore as @ObservedObject parameter. ClaudeUsageApp passes accountStore to ContentView, and ContentView passes it through to SettingsView when opening the settings window.
+- Files changed:
+  - ClaudeUsage/ClaudeUsageApp.swift (updated - passes accountStore to ContentView)
+  - ClaudeUsage/Views/ContentView.swift (updated - accepts @ObservedObject accountStore, passes to SettingsView)
+  - ClaudeUsage/Views/SettingsView.swift (updated - accepts @ObservedObject accountStore)
+  - prd.json (updated - US-004 passes: true)
+- **Learnings for future iterations:**
+  - ContentView and SettingsView both receive AccountStore for future multi-account UI features
+  - SettingsView accepts accountStore but still reads/writes via old KeychainService methods — will be updated in US-007
 ---
