@@ -20,6 +20,9 @@ Started: 2026-02-09T01:34:52.881Z
 - UsageService uses URLSession with dependency injection (pass custom session for testing)
 - SMAppService (macOS 13+) for Launch at Login: register()/unregister() throw, check status == .enabled for current state
 - Use URLProtocol subclass mock for testing URLSession-based network code — register via URLSessionConfiguration.ephemeral with protocolClasses
+- AccountStore manages multi-account state: accounts array, activeAccountId, persistence to UserDefaults (metadata) + Keychain (secrets scoped by "{accountId}-sessionKey")
+- Account struct in Models/Account.swift, AccountStore in Services/AccountStore.swift
+- KeychainService multi-account methods use accountId parameter: save(key:accountId:value:), read(key:accountId:), delete(key:accountId:)
 
 ---
 
@@ -168,4 +171,30 @@ Started: 2026-02-09T01:34:52.881Z
   - SMAppService.mainApp.register() and .unregister() both throw — wrap in do/catch and revert toggle state on failure
   - Check current state with SMAppService.mainApp.status == .enabled in onAppear to reflect actual registration state
   - No new files needed — the toggle fits naturally in the existing SettingsView
+---
+
+## 2026-02-17 - US-001 (multi-account PRD)
+- What was implemented: Account data model and AccountStore for multi-account support. Account struct with id (UUID), email, sessionKey, orgId, and isConfigured computed property. AccountStore as ObservableObject with CRUD operations (add, remove, setActive, update), persistence to UserDefaults (metadata) + Keychain (secrets via account-scoped keys), and migration logic from single-account credentials.
+- Files changed:
+  - ClaudeUsage/Models/Account.swift (new - Account struct)
+  - ClaudeUsage/Services/AccountStore.swift (new - AccountStore class with CRUD, persistence, migration)
+  - ClaudeUsage.xcodeproj/project.pbxproj (updated - added Account.swift and AccountStore.swift)
+  - prd.json (updated - US-001 passes: true)
+- **Learnings for future iterations:**
+  - AccountStore uses a separate AccountMetadata struct for UserDefaults persistence to avoid storing secrets outside Keychain
+  - Session keys are stored in Keychain scoped by "{accountId}-sessionKey" format
+  - Migration checks for empty accounts list and old-style credentials, creates "Account 1" and deletes old keys
+  - AccountStore has convenience methods saveSessionKey/saveOrgId that update both Keychain and in-memory model
+---
+
+## 2026-02-17 - US-002 (KeychainService multi-account support)
+- What was implemented: Multi-account scoped methods were already added to KeychainService during US-001 implementation. This story verified the acceptance criteria are met: save(key:accountId:value:), read(key:accountId:), delete(key:accountId:) methods exist with account-scoped cache keys. Old single-account methods remain for migration. Build passes.
+- Files changed:
+  - ClaudeUsage/Services/KeychainService.swift (already modified in US-001 - contains both old and new methods)
+  - prd.json (updated - US-002 passes: true)
+- **Learnings for future iterations:**
+  - The multi-account KeychainService methods were co-implemented with AccountStore in US-001 since AccountStore depends on them
+  - accountKey helper formats as "{accountId.uuidString}-{key.rawValue}" for scoped storage
+  - orgId uses UserDefaults with account-scoped key "claude_org_id_{accountId}" instead of Keychain
+  - Cache scoping works by using the full scopedKey (including accountId) as the dictionary key
 ---
