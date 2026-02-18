@@ -20,8 +20,30 @@ struct ContentView: View {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    private var accountPicker: some View {
+        Group {
+            if accountStore.accounts.count >= 2 {
+                Picker("Account", selection: Binding(
+                    get: { accountStore.activeAccountId ?? UUID() },
+                    set: { accountStore.setActive(id: $0) }
+                )) {
+                    ForEach(accountStore.accounts) { account in
+                        Text(account.email).tag(account.id)
+                    }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 4)
+            }
+        }
+    }
+
     private var usageContent: some View {
         VStack(spacing: 0) {
+            accountPicker
+
             if viewModel.errorState == .authExpired {
                 VStack(spacing: 12) {
                     Image(systemName: "exclamationmark.circle.fill")

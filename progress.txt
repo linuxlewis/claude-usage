@@ -225,3 +225,14 @@ Started: 2026-02-09T01:34:52.881Z
   - ContentView and SettingsView both receive AccountStore for future multi-account UI features
   - SettingsView accepts accountStore but still reads/writes via old KeychainService methods — will be updated in US-007
 ---
+
+## 2026-02-17 - US-005 (Account switcher in dropdown)
+- What was implemented: Added account picker (Picker with .menu style) at the top of the ContentView popover. Only visible when accountStore.accounts.count >= 2. Uses Binding with get/set to read activeAccountId and call setActive(id:) on selection change. Each account shows its email as the label.
+- Files changed:
+  - ClaudeUsage/Views/ContentView.swift (updated - added accountPicker computed property and placed it at top of usageContent VStack)
+  - prd.json (updated - US-005 passes: true)
+- **Learnings for future iterations:**
+  - Use Picker with .menu style and .labelsHidden() for a compact dropdown in the popover
+  - Binding(get:set:) pattern needed since activeAccountId is on AccountStore not a local @State
+  - Group {} wrapper used to conditionally include the picker without affecting VStack layout when hidden
+---
