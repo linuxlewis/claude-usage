@@ -3,6 +3,8 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var viewModel: UsageViewModel
     @ObservedObject var accountStore: AccountStore
+    @State private var showingAddAccount = false
+    @State private var newAccountEmail = ""
 
     var body: some View {
         usageContent
@@ -40,6 +42,91 @@ struct ContentView: View {
         }
     }
 
+    private var toolbarButtons: some View {
+        HStack {
+            if viewModel.errorState == .networkError {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(.orange)
+                Text("Network error")
+                    .font(.system(size: 11))
+                    .foregroundColor(.orange)
+            } else {
+                Text("Updated \(viewModel.lastUpdatedString)")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            Button(action: {
+                showingAddAccount = true
+            }) {
+                Image(systemName: "plus")
+                    .font(.system(size: 12))
+            }
+            .buttonStyle(.borderless)
+            .popover(isPresented: $showingAddAccount) {
+                addAccountPopover
+            }
+
+            Button(action: {
+                viewModel.fetchNow()
+            }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 12))
+            }
+            .buttonStyle(.borderless)
+
+            Button(action: {
+                openSettings()
+            }) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 12))
+            }
+            .buttonStyle(.borderless)
+
+            Button(action: {
+                NSApplication.shared.terminate(nil)
+            }) {
+                Image(systemName: "power")
+                    .font(.system(size: 12))
+            }
+            .buttonStyle(.borderless)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+    }
+
+    private var addAccountPopover: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Add Account")
+                .font(.headline)
+
+            TextField("Email or label", text: $newAccountEmail)
+                .textFieldStyle(.roundedBorder)
+                .font(.system(size: 12))
+
+            HStack {
+                Spacer()
+                Button("Cancel") {
+                    newAccountEmail = ""
+                    showingAddAccount = false
+                }
+                Button("Add") {
+                    let account = accountStore.add(email: newAccountEmail)
+                    accountStore.setActive(id: account.id)
+                    newAccountEmail = ""
+                    showingAddAccount = false
+                }
+                .disabled(newAccountEmail.isEmpty)
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(16)
+        .frame(width: 240)
+    }
+
     private var usageContent: some View {
         VStack(spacing: 0) {
             accountPicker
@@ -72,48 +159,7 @@ struct ContentView: View {
 
                 Divider()
 
-                HStack {
-                    if viewModel.errorState == .networkError {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 11))
-                            .foregroundColor(.orange)
-                        Text("Network error")
-                            .font(.system(size: 11))
-                            .foregroundColor(.orange)
-                    } else {
-                        Text("Updated \(viewModel.lastUpdatedString)")
-                            .font(.system(size: 11))
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-
-                    Button(action: {
-                        viewModel.fetchNow()
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 12))
-                    }
-                    .buttonStyle(.borderless)
-
-                    Button(action: {
-                        openSettings()
-                    }) {
-                        Image(systemName: "gearshape")
-                            .font(.system(size: 12))
-                    }
-                    .buttonStyle(.borderless)
-
-                    Button(action: {
-                        NSApplication.shared.terminate(nil)
-                    }) {
-                        Image(systemName: "power")
-                            .font(.system(size: 12))
-                    }
-                    .buttonStyle(.borderless)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                toolbarButtons
             } else {
                 VStack(spacing: 12) {
                     Text("Claude Usage")

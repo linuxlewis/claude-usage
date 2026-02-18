@@ -236,3 +236,14 @@ Started: 2026-02-09T01:34:52.881Z
   - Binding(get:set:) pattern needed since activeAccountId is on AccountStore not a local @State
   - Group {} wrapper used to conditionally include the picker without affecting VStack layout when hidden
 ---
+
+## 2026-02-17 - US-006 (Add Account button and flow)
+- What was implemented: Added a '+' (plus) icon button as the first icon in the bottom toolbar button group (order: + ⟳ ⚙ ⏻). Clicking '+' shows a popover with email text field and Add/Cancel buttons. On Add, creates a new account via accountStore.add(email:), sets it as active, and dismisses. The new unconfigured account triggers the "Not configured" state in the main view. Cancel dismisses without adding. Extracted toolbar buttons into a reusable toolbarButtons computed property.
+- Files changed:
+  - ClaudeUsage/Views/ContentView.swift (updated - added showingAddAccount/newAccountEmail state, addAccountPopover view, '+' button with popover, refactored toolbar into toolbarButtons property)
+  - prd.json (updated - US-006 passes: true)
+- **Learnings for future iterations:**
+  - .popover(isPresented:) attached directly to the button that triggers it positions the popover correctly near the button
+  - .keyboardShortcut(.defaultAction) on the Add button allows Enter key to submit
+  - Extracting the toolbar HStack into a separate computed property keeps usageContent cleaner
+---
