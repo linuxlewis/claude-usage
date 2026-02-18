@@ -81,7 +81,7 @@ When multiple accounts exist, add an account selector at the top of the popover,
 │  Weekly     ████░░░░░░ 40%  │
 │  ...                        │
 ├─────────────────────────────┤
-│  + Updated 2m ago   ⟳ ⚙ ⏻  │
+│  Updated 2m ago  +  ⟳ ⚙ ⏻  │
 └─────────────────────────────┘
 ```
 
@@ -94,10 +94,10 @@ When only one account exists, the picker is hidden (no change from current UI).
 
 ### 2. "+" Button in Bottom Toolbar
 
-Add a `plus` icon button to the far left of the bottom bar, before the status text:
+Add a `plus` icon button as the first icon in the right-side icon group (left of refresh, gear, and quit):
 
 ```
-+  Updated 2m ago   ⟳  ⚙  ⏻
+Updated 2m ago   +  ⟳  ⚙  ⏻
 ```
 
 - **Icon**: `plus.circle` or `plus`
