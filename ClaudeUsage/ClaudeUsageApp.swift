@@ -2,7 +2,15 @@ import SwiftUI
 
 @main
 struct ClaudeUsageApp: App {
-    @StateObject private var viewModel = UsageViewModel()
+    @StateObject private var accountStore = AccountStore()
+    @StateObject private var viewModel: UsageViewModel
+
+    init() {
+        let store = AccountStore()
+        _accountStore = StateObject(wrappedValue: store)
+        _viewModel = StateObject(wrappedValue: UsageViewModel(accountStore: store))
+    }
+
     private var menuBarText: String {
         let pct = Int(viewModel.usageData?.fiveHour.utilization ?? 0)
         let resetDate: Date? = viewModel.usageData?.fiveHour.resetsAt

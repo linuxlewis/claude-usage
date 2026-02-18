@@ -21,6 +21,7 @@ Started: 2026-02-09T01:34:52.881Z
 - SMAppService (macOS 13+) for Launch at Login: register()/unregister() throw, check status == .enabled for current state
 - Use URLProtocol subclass mock for testing URLSession-based network code — register via URLSessionConfiguration.ephemeral with protocolClasses
 - AccountStore manages multi-account state: accounts array, activeAccountId, persistence to UserDefaults (metadata) + Keychain (secrets scoped by "{accountId}-sessionKey")
+- UsageViewModel takes AccountStore in init and subscribes to accountStore.$activeAccountId for automatic polling restart on account switch
 - Account struct in Models/Account.swift, AccountStore in Services/AccountStore.swift
 - KeychainService multi-account methods use accountId parameter: save(key:accountId:value:), read(key:accountId:), delete(key:accountId:)
 
@@ -197,4 +198,17 @@ Started: 2026-02-09T01:34:52.881Z
   - accountKey helper formats as "{accountId.uuidString}-{key.rawValue}" for scoped storage
   - orgId uses UserDefaults with account-scoped key "claude_org_id_{accountId}" instead of Keychain
   - Cache scoping works by using the full scopedKey (including accountId) as the dictionary key
+---
+
+## 2026-02-17 - US-003 (UsageViewModel uses AccountStore)
+- What was implemented: Refactored UsageViewModel to depend on AccountStore instead of reading Keychain directly. UsageViewModel now takes AccountStore as init parameter. Polling uses active account's credentials via accountStore.sessionKey(for:) and accountStore.orgId(for:). Added Combine subscription on accountStore.$activeAccountId to cancel old polling and start new when active account changes. Added activeEmail computed property. Updated ClaudeUsageApp to create both AccountStore and UsageViewModel as @StateObject with shared AccountStore instance.
+- Files changed:
+  - ClaudeUsage/Models/UsageViewModel.swift (updated - takes AccountStore in init, uses account-scoped credentials, watches activeAccountId changes)
+  - ClaudeUsage/ClaudeUsageApp.swift (updated - creates AccountStore as @StateObject, passes to UsageViewModel)
+  - prd.json (updated - US-003 passes: true)
+- **Learnings for future iterations:**
+  - Use accountStore.$activeAccountId.removeDuplicates().sink to react to account switches — clears state and restarts polling
+  - ClaudeUsageApp needs custom init() to share a single AccountStore between @StateObject properties
+  - performFetch now takes accountId parameter to scope Set-Cookie key updates to the correct account
+  - SettingsView still uses old KeychainService directly — will need updating in US-007
 ---
