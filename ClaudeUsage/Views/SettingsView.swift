@@ -5,6 +5,7 @@ struct SettingsView: View {
     @ObservedObject var viewModel: UsageViewModel
     @State private var sessionKeyInput = ""
     @State private var orgIdInput = ""
+    @State private var timeDisplayFormat = TimeDisplayFormat.resetTime
     @State private var isTesting = false
     @State private var testResult: TestResult?
     @State private var launchAtLogin = false
@@ -46,6 +47,20 @@ struct SettingsView: View {
                 TextField("Paste org ID", text: $orgIdInput)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: 12))
+            }
+
+            // Time Display Preference
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Menu Bar Time Display")
+                    .font(.system(size: 12, weight: .medium))
+                Picker("Time Format", selection: $timeDisplayFormat) {
+                    ForEach(TimeDisplayFormat.allCases, id: \.self) { format in
+                        Text(format.displayName)
+                            .tag(format)
+                    }
+                }
+                .pickerStyle(.menu)
+                .font(.system(size: 12))
             }
 
             // Buttons
@@ -114,6 +129,8 @@ struct SettingsView: View {
         .onAppear {
             sessionKeyInput = KeychainService.read(key: .sessionKey) ?? ""
             orgIdInput = KeychainService.read(key: .orgId) ?? ""
+            let savedFormat = UserDefaults.standard.string(forKey: "claude_time_display_format") ?? TimeDisplayFormat.resetTime.rawValue
+            timeDisplayFormat = TimeDisplayFormat(rawValue: savedFormat) ?? .resetTime
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
     }
@@ -137,6 +154,7 @@ struct SettingsView: View {
     private func saveCredentials() {
         KeychainService.save(key: .sessionKey, value: sessionKeyInput)
         KeychainService.save(key: .orgId, value: orgIdInput)
+        UserDefaults.standard.set(timeDisplayFormat.rawValue, forKey: "claude_time_display_format")
         viewModel.updateAuthStatus()
         viewModel.startPollingIfConfigured()
         testResult = nil

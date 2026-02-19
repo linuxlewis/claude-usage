@@ -30,14 +30,22 @@ A **circular progress ring** that shows the highest current utilization:
   - **Green** — < 50%
   - **Yellow** — 50–79%
   - **Red** — ≥ 80%
-- Next to the circle: **reset time in local timezone** (e.g. `11:00 PM`)
-  - Shows the reset time for whichever limit is highest (session or weekly)
+- Next to the circle: **time display in local timezone** (user selectable)
+  - **Reset time format:** shows when limit resets (e.g. `11:00 PM`)
+  - **Remaining time format:** shows time until reset (e.g. `2h 15m`)
+  - Shows time for whichever limit is highest (session or weekly)
 
 **Examples:**
 ```
+Reset time format:
 🟢⌓ 11:00 PM     ← 16% session, resets at 11pm
 🟡◑ Sat 10:59 AM  ← 65% weekly, resets Saturday
 🔴◕ 2:30 PM       ← 90% session, resets at 2:30pm
+
+Remaining time format:
+🟢⌓ 2h 45m       ← 16% session, 2h 45m until reset
+🟡◑ 3d 10h       ← 65% weekly, 3d 10h until reset
+🔴◕ 45m          ← 90% session, 45m until reset
 ```
 
 ## Click-to-Expand Popover
@@ -73,17 +81,17 @@ Each limit shows:
 - **Language:** Swift
 - **UI:** SwiftUI + `MenuBarExtra` (macOS 13+)
 - **Networking:** URLSession (native, no deps)
-- **Storage:** UserDefaults for settings, Keychain for session key
+- **Storage:** UserDefaults for settings (org ID, time display preference), Keychain for session key
 - **Min target:** macOS 13 Ventura
 
 ## Features (MVP)
 
 - [ ] Menu bar circular progress ring with color coding
-- [ ] Local timezone reset time next to icon
+- [ ] Local timezone time display next to icon (user selectable: reset time or remaining time)
 - [ ] Click to expand popover with all usage bars
 - [ ] Poll every 5 minutes
 - [ ] Reset countdown timers in local timezone
-- [ ] Settings: enter session key + org ID
+- [ ] Settings: enter session key + org ID + time display preference
 - [ ] Store session key in Keychain
 - [ ] Handle session key refresh from Set-Cookie responses
 - [ ] Graceful error states (expired session, network error)
