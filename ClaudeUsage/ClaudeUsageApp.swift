@@ -7,9 +7,8 @@ struct ClaudeUsageApp: App {
         let pct = Int(viewModel.usageData?.fiveHour.utilization ?? 0)
         let resetDate: Date? = viewModel.usageData?.fiveHour.resetsAt
         if let date = resetDate {
-            let fmt = DateFormatter()
-            fmt.dateFormat = "h:mm a"
-            return "\(pct)% · \(fmt.string(from: date))"
+            let timeText = viewModel.menuBarTimeString
+            return "\(pct)% · \(timeText)"
         }
         return "\(pct)%"
     }

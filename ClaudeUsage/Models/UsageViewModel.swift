@@ -1,12 +1,27 @@
 import SwiftUI
 import Combine
 
+enum TimeDisplayFormat: String, CaseIterable {
+    case resetTime = "reset_time"
+    case remainingTime = "remaining_time"
+    
+    var displayName: String {
+        switch self {
+        case .resetTime:
+            return "Reset Time"
+        case .remainingTime:
+            return "Time Until Reset"
+        }
+    }
+}
+
 class UsageViewModel: ObservableObject {
     @Published var usageData: UsageData?
     @Published var lastUpdated: Date?
     @Published var errorState: ErrorState?
     @Published var refreshRequested = false
     @Published var authStatus: AuthStatus = .notConfigured
+    @Published var timeDisplayFormat = TimeDisplayFormat.resetTime
 
     enum ErrorState: Equatable {
         case authExpired
@@ -24,6 +39,10 @@ class UsageViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     init() {
+        // Initialize time display preference from UserDefaults
+        let savedFormat = UserDefaults.standard.string(forKey: "claude_time_display_format") ?? TimeDisplayFormat.resetTime.rawValue
+        timeDisplayFormat = TimeDisplayFormat(rawValue: savedFormat) ?? .resetTime
+
         updateAuthStatus()
 
         // Watch for refresh requests
@@ -32,6 +51,17 @@ class UsageViewModel: ObservableObject {
             .sink { [weak self] _ in
                 self?.refreshRequested = false
                 self?.fetchNow()
+            }
+            .store(in: &cancellables)
+
+        // Watch for UserDefaults changes to update timeDisplayFormat
+        NotificationCenter.default
+            .publisher(for: UserDefaults.didChangeNotification)
+            .sink { [weak self] _ in
+                DispatchQueue.main.async {
+                    let savedFormat = UserDefaults.standard.string(forKey: "claude_time_display_format") ?? TimeDisplayFormat.resetTime.rawValue
+                    self?.timeDisplayFormat = TimeDisplayFormat(rawValue: savedFormat) ?? .resetTime
+                }
             }
             .store(in: &cancellables)
 
@@ -172,5 +202,50 @@ class UsageViewModel: ObservableObject {
         if let i = data.iguanaNecktie { results.append(("Other", i)) }
         if let e = data.extraUsage { results.append(("Extra Usage", e)) }
         return results
+    }
+
+    /// Returns a formatted string showing time remaining until the 5-hour limit resets.
+    var remainingTimeString: String {
+        guard let resetDate = usageData?.fiveHour.resetsAt else { return "" }
+
+        let now = Date()
+        let timeInterval = resetDate.timeIntervalSince(now)
+
+        // If reset time is in the past, show "Now" or similar
+        if timeInterval <= 0 {
+            return "Now"
+        }
+
+        let totalMinutes = Int(timeInterval / 60)
+        let hours = totalMinutes / 60
+        let minutes = totalMinutes % 60
+
+        if hours > 0 {
+            if minutes > 0 {
+                return "\(hours)h \(minutes)m"
+            } else {
+                return "\(hours)h"
+            }
+        } else {
+            return "\(minutes)m"
+        }
+    }
+
+    /// Returns the formatted reset time string (existing behavior).
+    var resetTimeString: String {
+        guard let resetDate = usageData?.fiveHour.resetsAt else { return "" }
+        let fmt = DateFormatter()
+        fmt.dateFormat = "h:mm a"
+        return fmt.string(from: resetDate)
+    }
+
+    /// Returns the appropriate time string based on user preference.
+    var menuBarTimeString: String {
+        switch timeDisplayFormat {
+        case .resetTime:
+            return resetTimeString
+        case .remainingTime:
+            return remainingTimeString
+        }
     }
 }
