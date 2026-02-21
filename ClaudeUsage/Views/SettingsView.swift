@@ -168,7 +168,7 @@ struct SettingsView: View {
                 }
 
             // Accounts list
-            if !accountStore.accounts.isEmpty {
+            if accountStore.accounts.count > 1 {
                 Divider()
 
                 VStack(alignment: .leading, spacing: 8) {
