@@ -21,14 +21,50 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header with active account email
+            // Header with active account name (editable)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Claude Usage Settings")
                     .font(.headline)
-                if let email = viewModel.activeEmail {
-                    Text(email)
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                if let account = accountStore.activeAccount {
+                    if editingAccountId == account.id {
+                        HStack(spacing: 4) {
+                            TextField("Account name", text: $editingAccountName, onCommit: {
+                                if !editingAccountName.isEmpty {
+                                    accountStore.rename(id: account.id, to: editingAccountName)
+                                }
+                                editingAccountId = nil
+                            })
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12))
+                            .frame(maxWidth: 180)
+                            Button(action: {
+                                if !editingAccountName.isEmpty {
+                                    accountStore.rename(id: account.id, to: editingAccountName)
+                                }
+                                editingAccountId = nil
+                            }) {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.green)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    } else {
+                        HStack(spacing: 4) {
+                            Text(account.email)
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                            Button(action: {
+                                editingAccountName = account.email
+                                editingAccountId = account.id
+                            }) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
                 }
             }
 
@@ -144,34 +180,14 @@ struct SettingsView: View {
 
                     ForEach(accountStore.accounts) { account in
                         HStack {
-                            if editingAccountId == account.id {
-                                TextField("Account name", text: $editingAccountName, onCommit: {
-                                    if !editingAccountName.isEmpty {
-                                        accountStore.rename(id: account.id, to: editingAccountName)
-                                    }
-                                    editingAccountId = nil
-                                })
-                                .textFieldStyle(.roundedBorder)
+                            Text(account.email)
                                 .font(.system(size: 12))
-                            } else {
-                                Text(account.email)
-                                    .font(.system(size: 12))
-                                if account.id == accountStore.activeAccountId {
-                                    Text("(active)")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            Spacer()
-                            Button(action: {
-                                editingAccountName = account.email
-                                editingAccountId = account.id
-                            }) {
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 11))
+                            if account.id == accountStore.activeAccountId {
+                                Text("(active)")
+                                    .font(.system(size: 10))
                                     .foregroundColor(.secondary)
                             }
-                            .buttonStyle(.borderless)
+                            Spacer()
                             Button(action: {
                                 accountStore.remove(id: account.id)
                                 loadActiveAccountCredentials()
