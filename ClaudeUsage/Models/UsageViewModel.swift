@@ -74,8 +74,11 @@ class UsageViewModel: ObservableObject {
             .store(in: &cancellables)
 
         // Watch for active account changes and restart polling
+        // Note: @Published fires on willSet, so we receive on next runloop tick
+        // to ensure activeAccountId is already updated when we read it.
         accountStore.$activeAccountId
             .removeDuplicates()
+            .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 guard let self = self else { return }
                 // Cancel existing polling FIRST to prevent stale fetches
