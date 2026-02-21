@@ -99,15 +99,23 @@ class UsageViewModel: ObservableObject {
             authStatus = .notConfigured
             return
         }
-        let hasKey = account.sessionKey != nil && !account.sessionKey!.isEmpty
-        let hasOrg = account.orgId != nil && !account.orgId!.isEmpty
+        // Check both in-memory model and Keychain for credentials
+        let hasKey: Bool = {
+            if let key = account.sessionKey, !key.isEmpty { return true }
+            if let key = accountStore.sessionKey(for: account.id), !key.isEmpty { return true }
+            return false
+        }()
+        let hasOrg: Bool = {
+            if let org = account.orgId, !org.isEmpty { return true }
+            if let org = accountStore.orgId(for: account.id), !org.isEmpty { return true }
+            return false
+        }()
         if hasKey && hasOrg {
             if errorState == .authExpired {
                 authStatus = .expired
-            } else if usageData != nil {
-                authStatus = .connected
             } else {
-                authStatus = .notConfigured
+                // Credentials exist — treat as connected (data fetch in progress or complete)
+                authStatus = .connected
             }
         } else {
             authStatus = .notConfigured
