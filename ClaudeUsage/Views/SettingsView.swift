@@ -37,17 +37,14 @@ struct SettingsView: View {
                             .textFieldStyle(.roundedBorder)
                             .font(.system(size: 12))
                             .frame(maxWidth: 180)
-                            Button(action: {
+                            Button("Save") {
                                 if !editingAccountName.isEmpty {
                                     accountStore.rename(id: account.id, to: editingAccountName)
                                 }
                                 editingAccountId = nil
-                            }) {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 10))
-                                    .foregroundColor(.green)
                             }
-                            .buttonStyle(.borderless)
+                            .font(.system(size: 11))
+                            .controlSize(.small)
                         }
                     } else {
                         HStack(spacing: 4) {
