@@ -185,16 +185,17 @@ struct SettingsView: View {
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
-                            Button(action: {
-                                accountStore.remove(id: account.id)
-                                loadActiveAccountCredentials()
-                            }) {
-                                Image(systemName: "trash")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(.red)
+                            if accountStore.accounts.count > 1 {
+                                Button(action: {
+                                    accountStore.remove(id: account.id)
+                                    loadActiveAccountCredentials()
+                                }) {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.borderless)
                             }
-                            .buttonStyle(.borderless)
-                            .disabled(accountStore.accounts.count <= 1)
                         }
                     }
                 }
