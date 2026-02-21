@@ -17,6 +17,8 @@
 		AA000008 /* UsageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100011 /* UsageViewModel.swift */; };
 		AA000009 /* UsageBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100012 /* UsageBar.swift */; };
 		AA000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100013 /* SettingsView.swift */; };
+		AA000011 /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100014 /* Account.swift */; };
+		AA000012 /* AccountStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA100015 /* AccountStore.swift */; };
 		AA000030 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA100030 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
@@ -44,6 +46,8 @@
 		AA100011 /* UsageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageViewModel.swift; sourceTree = "<group>"; };
 		AA100012 /* UsageBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageBar.swift; sourceTree = "<group>"; };
 		AA100013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA100014 /* Account.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Account.swift; sourceTree = "<group>"; };
+		AA100015 /* AccountStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountStore.swift; sourceTree = "<group>"; };
 		AA100030 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -120,6 +124,7 @@
 			children = (
 				AA100007 /* UsageData.swift */,
 				AA100011 /* UsageViewModel.swift */,
+				AA100014 /* Account.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -129,6 +134,7 @@
 			children = (
 				AA100008 /* KeychainService.swift */,
 				AA100009 /* UsageService.swift */,
+				AA100015 /* AccountStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -224,6 +230,8 @@
 				AA000008 /* UsageViewModel.swift in Sources */,
 				AA000009 /* UsageBar.swift in Sources */,
 				AA000010 /* SettingsView.swift in Sources */,
+				AA000011 /* Account.swift in Sources */,
+				AA000012 /* AccountStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

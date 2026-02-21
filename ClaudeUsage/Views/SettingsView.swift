@@ -3,12 +3,15 @@ import ServiceManagement
 
 struct SettingsView: View {
     @ObservedObject var viewModel: UsageViewModel
+    @ObservedObject var accountStore: AccountStore
     @State private var sessionKeyInput = ""
     @State private var orgIdInput = ""
     @State private var timeDisplayFormat = TimeDisplayFormat.resetTime
     @State private var isTesting = false
     @State private var testResult: TestResult?
     @State private var launchAtLogin = false
+    @State private var editingAccountId: UUID?
+    @State private var editingAccountName = ""
 
     enum TestResult {
         case success
@@ -18,8 +21,49 @@ struct SettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Claude Usage Settings")
-                .font(.headline)
+            // Header with active account name (editable)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Claude Usage Settings")
+                    .font(.headline)
+                if let account = accountStore.activeAccount {
+                    if editingAccountId == account.id {
+                        HStack(spacing: 4) {
+                            TextField("Account name", text: $editingAccountName, onCommit: {
+                                if !editingAccountName.isEmpty {
+                                    accountStore.rename(id: account.id, to: editingAccountName)
+                                }
+                                editingAccountId = nil
+                            })
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 12))
+                            .frame(maxWidth: 180)
+                            Button("Save") {
+                                if !editingAccountName.isEmpty {
+                                    accountStore.rename(id: account.id, to: editingAccountName)
+                                }
+                                editingAccountId = nil
+                            }
+                            .font(.system(size: 11))
+                            .controlSize(.small)
+                        }
+                    } else {
+                        HStack(spacing: 4) {
+                            Text(account.email)
+                                .font(.system(size: 12))
+                                .foregroundColor(.secondary)
+                            Button(action: {
+                                editingAccountName = account.email
+                                editingAccountId = account.id
+                            }) {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+            }
 
             // Auth status
             HStack(spacing: 6) {
@@ -119,20 +163,63 @@ struct SettingsView: View {
                             try SMAppService.mainApp.unregister()
                         }
                     } catch {
-                        // Revert toggle if registration fails
                         launchAtLogin = !newValue
                     }
                 }
+
+            // Accounts list
+            if accountStore.accounts.count > 1 {
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Accounts")
+                        .font(.system(size: 12, weight: .medium))
+
+                    ForEach(accountStore.accounts) { account in
+                        HStack {
+                            Text(account.email)
+                                .font(.system(size: 12))
+                            if account.id == accountStore.activeAccountId {
+                                Text("(active)")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            if accountStore.accounts.count > 1 {
+                                Button(action: {
+                                    accountStore.remove(id: account.id)
+                                    loadActiveAccountCredentials()
+                                }) {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+                    }
+                }
+            }
         }
         .padding(16)
         .frame(width: 280)
         .onAppear {
-            sessionKeyInput = KeychainService.read(key: .sessionKey) ?? ""
-            orgIdInput = KeychainService.read(key: .orgId) ?? ""
+            loadActiveAccountCredentials()
             let savedFormat = UserDefaults.standard.string(forKey: "claude_time_display_format") ?? TimeDisplayFormat.resetTime.rawValue
             timeDisplayFormat = TimeDisplayFormat(rawValue: savedFormat) ?? .resetTime
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
+    }
+
+    private func loadActiveAccountCredentials() {
+        guard let accountId = accountStore.activeAccountId else {
+            sessionKeyInput = ""
+            orgIdInput = ""
+            return
+        }
+        sessionKeyInput = accountStore.sessionKey(for: accountId) ?? ""
+        orgIdInput = accountStore.orgId(for: accountId) ?? ""
+        testResult = nil
     }
 
     private var authStatusColor: Color {
@@ -152,8 +239,9 @@ struct SettingsView: View {
     }
 
     private func saveCredentials() {
-        KeychainService.save(key: .sessionKey, value: sessionKeyInput)
-        KeychainService.save(key: .orgId, value: orgIdInput)
+        guard let accountId = accountStore.activeAccountId else { return }
+        accountStore.saveSessionKey(sessionKeyInput, for: accountId)
+        accountStore.saveOrgId(orgIdInput, for: accountId)
         UserDefaults.standard.set(timeDisplayFormat.rawValue, forKey: "claude_time_display_format")
         viewModel.updateAuthStatus()
         viewModel.startPollingIfConfigured()
@@ -170,7 +258,9 @@ struct SettingsView: View {
             do {
                 let (_, newKey) = try await service.fetchUsage()
                 if let newKey = newKey {
-                    KeychainService.save(key: .sessionKey, value: newKey)
+                    if let accountId = accountStore.activeAccountId {
+                        accountStore.saveSessionKey(newKey, for: accountId)
+                    }
                     await MainActor.run {
                         sessionKeyInput = newKey
                     }

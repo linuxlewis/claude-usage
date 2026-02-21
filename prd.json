@@ -1,176 +1,115 @@
 {
   "project": "ClaudeUsage",
-  "branchName": "ralph/claude-usage-menubar",
-  "description": "A native macOS menu bar app that displays Claude.ai subscription usage limits. Shows a circular progress ring with color coding and reset times. Polls the claude.ai usage API with session cookie auth.",
+  "branchName": "feat/multi-account",
+  "description": "Add multi-account support to the Claude Usage menu bar app. Users can manage multiple Claude accounts, switch between them, and configure each independently.",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Swift Package scaffold with build and test",
-      "description": "Create a new macOS app project using Swift Package Manager. Set up the basic app structure with a SwiftUI App entry point, MenuBarExtra, and an XCTest target. The app should compile and launch as a menu bar-only app (no dock icon).",
+      "title": "Account data model",
+      "description": "Create an Account struct and AccountStore class to manage multiple accounts. Account has id (UUID), email (String), sessionKey (String?), orgId (String?). AccountStore manages the list of accounts, active selection, and persistence to UserDefaults (metadata) + Keychain (secrets). Include migration logic: on init, if old-style single credentials exist in KeychainService, create a default Account with email 'Account 1', migrate the credentials, set as active, and delete old keys.",
       "acceptanceCriteria": [
-        "Project builds with `swift build`",
-        "Test target exists and `swift test` passes",
-        "App uses SwiftUI App lifecycle with MenuBarExtra",
-        "Info.plist sets LSUIElement=true (no dock icon)",
-        "App target is macOS 13+"
+        "Account struct exists in Models/Account.swift with id, email, sessionKey, orgId, and computed isConfigured property",
+        "AccountStore class exists in Services/AccountStore.swift as ObservableObject with accounts array and activeAccountId",
+        "AccountStore has add(email:), remove(id:), setActive(id:), update(_:) methods",
+        "Account session keys stored in Keychain scoped by account UUID",
+        "Account metadata (id, email, orgId) persisted in UserDefaults",
+        "Migration from old single-account credentials works on first launch",
+        "Typecheck passes"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Use Xcode project (not SPM) since MenuBarExtra requires app bundle. Use `xcodebuild -scheme ClaudeUsage -destination 'platform=macOS' build` to verify builds. Use `xcodebuild test -scheme ClaudeUsage -destination 'platform=macOS'` for tests."
+      "notes": ""
     },
     {
       "id": "US-002",
-      "title": "Usage data model with JSON decoding",
-      "description": "Create Codable Swift models that decode the claude.ai usage API response. Handle nullable fields gracefully (seven_day_opus, seven_day_cowork, etc. can be null).",
+      "title": "KeychainService multi-account support",
+      "description": "Extend KeychainService to support account-scoped credential storage. Add methods that take an account UUID to save/read/delete session keys per account. Keep backward compatibility for migration (old methods still work to read existing credentials). The keychain account key format should be '{accountId}-sessionKey'.",
       "acceptanceCriteria": [
-        "UsageData model decodes the full API response JSON",
-        "Nullable fields (seven_day_opus, seven_day_cowork, seven_day_oauth_apps, extra_usage, iguana_necktie) are Optional",
-        "UsageLimit model has utilization (Double) and resets_at (Date?)",
-        "Unit test decodes sample JSON with all fields present",
-        "Unit test decodes sample JSON with null optional fields",
-        "Unit test verifies utilization values are correct",
-        "`xcodebuild test` passes"
+        "KeychainService has save(key:accountId:value:), read(key:accountId:), delete(key:accountId:) methods",
+        "Old single-account methods still work for migration reads",
+        "Cache is scoped per account",
+        "Typecheck passes"
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Sample JSON: {\"five_hour\":{\"utilization\":17.0,\"resets_at\":\"2026-02-08T18:59:59.661633+00:00\"},\"seven_day\":{\"utilization\":11.0,\"resets_at\":\"2026-02-14T16:59:59.661657+00:00\"},\"seven_day_oauth_apps\":null,\"seven_day_opus\":null,\"seven_day_sonnet\":{\"utilization\":0.0,\"resets_at\":null},\"seven_day_cowork\":null,\"iguana_necktie\":null,\"extra_usage\":null}"
+      "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Keychain service for session key storage",
-      "description": "Create a KeychainService that securely stores and retrieves the session key and org ID in the macOS Keychain. This avoids storing secrets in UserDefaults or plain text.",
+      "title": "UsageViewModel uses AccountStore",
+      "description": "Refactor UsageViewModel to depend on AccountStore instead of reading Keychain directly. It should poll only the active account. When activeAccountId changes, cancel current polling and start polling the new account. Expose activeEmail for display.",
       "acceptanceCriteria": [
-        "KeychainService can save a session key string",
-        "KeychainService can read back the saved session key",
-        "KeychainService can save and read org ID",
-        "KeychainService can delete stored credentials",
-        "KeychainService handles 'not found' gracefully (returns nil)",
-        "`xcodebuild build` passes"
+        "UsageViewModel takes AccountStore as init parameter",
+        "Polling uses active account's credentials from AccountStore",
+        "Switching active account cancels old polling and starts new",
+        "activeEmail computed property returns current account's email",
+        "Typecheck passes"
       ],
       "priority": 3,
       "passes": true,
-      "notes": "Use Security framework directly (SecItemAdd, SecItemCopyMatching, etc). Service name: 'com.claudeusage.credentials'. Keychain tests are hard to unit test in CI so build-only check is fine."
+      "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Usage API client",
-      "description": "Create a UsageService that fetches usage data from the claude.ai API. Uses URLSession with the sessionKey cookie. Handles Set-Cookie responses to update the stored session key if rotated.",
+      "title": "App entry point wiring",
+      "description": "Update ClaudeUsageApp.swift to create AccountStore as a @StateObject and inject it into UsageViewModel and views. Both ContentView and SettingsView should receive the AccountStore.",
       "acceptanceCriteria": [
-        "UsageService.fetchUsage() returns decoded UsageData",
-        "Request includes sessionKey as a cookie header",
-        "Request includes anthropic-client-platform header",
-        "Handles HTTP 401/403 with a specific AuthError type",
-        "Parses Set-Cookie response header for sessionKey updates",
-        "Unit test verifies request construction using URLProtocol mock",
-        "Unit test verifies JSON decoding from mock response",
-        "Unit test verifies Set-Cookie parsing extracts new session key",
-        "`xcodebuild test` passes"
+        "AccountStore created as @StateObject in ClaudeUsageApp",
+        "AccountStore passed to UsageViewModel",
+        "AccountStore passed to ContentView and SettingsView",
+        "App builds and runs with no regressions for single-account usage",
+        "Typecheck passes"
       ],
       "priority": 4,
       "passes": true,
-      "notes": "Endpoint: GET https://claude.ai/api/organizations/{orgId}/usage. Headers: accept: */*, anthropic-client-platform: web_claude_ai, content-type: application/json. Cookie: sessionKey={key}"
+      "notes": ""
     },
     {
       "id": "US-005",
-      "title": "Circular progress ring component",
-      "description": "Create a reusable SwiftUI CircleProgress view that draws a circular ring showing utilization percentage. Color-coded: green (<50%), yellow (50-79%), red (>=80%).",
+      "title": "Account switcher in dropdown",
+      "description": "Add an account picker at the top of the ContentView popover, above the usage bars. Use a Picker or Menu showing each account's email. Selecting a different account calls accountStore.setActive(id:). Only show the picker when multiple accounts exist. When one account, hide it entirely.",
       "acceptanceCriteria": [
-        "CircleProgress view takes a percentage (0-100) parameter",
-        "Ring fills proportionally to the percentage",
-        "Green color when < 50%",
-        "Yellow color when 50-79%",
-        "Red color when >= 80%",
-        "Works at small sizes (16x16 for menu bar) and larger (32x32 for popover)",
-        "`xcodebuild build` passes"
+        "Account picker appears at top of popover when 2+ accounts exist",
+        "Picker shows each account's email as label",
+        "Selecting account switches active account in AccountStore",
+        "Picker hidden when only one account exists",
+        "Typecheck passes"
       ],
       "priority": 5,
       "passes": true,
-      "notes": "Use SwiftUI Circle().trim(from:to:) with .stroke() for the ring. Background ring in gray at ~0.2 opacity."
+      "notes": ""
     },
     {
       "id": "US-006",
-      "title": "Menu bar icon with progress ring and reset time",
-      "description": "Show the CircleProgress ring in the menu bar alongside the reset time in the user's local timezone. Display the highest utilization across all limits.",
+      "title": "Add Account button and flow",
+      "description": "Add a '+' (plus) icon button in the bottom toolbar of ContentView as the first icon in the right-side icon group (before refresh, gear, quit). Clicking it shows a small popover or sheet with an email text field and Add/Cancel buttons. On Add, create a new unconfigured Account with that email, switch to it, and the main view shows 'Not configured' with Open Settings button.",
       "acceptanceCriteria": [
-        "Menu bar shows circular progress ring",
-        "Ring reflects the highest current utilization (session or weekly)",
-        "Reset time shown next to ring in local timezone (e.g. '11:00 PM')",
-        "If reset is on a different day, includes day (e.g. 'Sat 10:59 AM')",
-        "Updates when new data is fetched",
-        "`xcodebuild build` passes"
+        "Plus icon button appears as first icon in bottom toolbar icon group: +  ⟳  ⚙  ⏻",
+        "Clicking + shows add-account popover/sheet with email field",
+        "Entering email and clicking Add creates new account and switches to it",
+        "New unconfigured account shows 'Not configured' state in main view",
+        "Cancel dismisses without adding",
+        "Typecheck passes"
       ],
       "priority": 6,
       "passes": true,
-      "notes": "Use MenuBarExtra with .menuBarExtraStyle(.window) for the popover. The label shows the ring + time text."
+      "notes": ""
     },
     {
       "id": "US-007",
-      "title": "Usage popover with all limits",
-      "description": "When clicking the menu bar icon, show a popover with all usage limits. Each limit shows a name, circular ring, percentage, horizontal bar, and reset time in local timezone.",
+      "title": "Settings scoped to active account",
+      "description": "Update SettingsView to configure the active account from AccountStore. Show the active account's email as a header. Session key and org ID fields load/save for the active account. Add an 'Accounts' section at the bottom listing all accounts with delete (trash) buttons. Cannot delete the last account. Deleting active account switches to next available.",
       "acceptanceCriteria": [
-        "Popover shows Session (five_hour) limit with bar and reset time",
-        "Popover shows Weekly (seven_day) limit with bar and reset time",
-        "Popover shows Sonnet limit if present (non-null)",
-        "Popover shows Opus limit if present (non-null)",
-        "Null limits are hidden (not shown)",
-        "Each bar is color-coded matching the circle ring colors",
-        "Reset times are in user's local timezone",
-        "Shows 'Updated X ago' timestamp at bottom",
-        "Has a refresh button",
-        "`xcodebuild build` passes"
+        "Settings header shows active account email",
+        "Session key and org ID fields load from and save to active account",
+        "Accounts list section shows all accounts with delete buttons",
+        "Cannot delete last remaining account (button disabled or hidden)",
+        "Deleting active account auto-switches to another account",
+        "Typecheck passes"
       ],
       "priority": 7,
       "passes": true,
       "notes": ""
-    },
-    {
-      "id": "US-008",
-      "title": "Settings view for auth configuration",
-      "description": "Create a settings view accessible from the popover. User can enter their session key and org ID. Values are stored in Keychain. Shows connection status.",
-      "acceptanceCriteria": [
-        "Settings view has a text field for session key (secure/password field)",
-        "Settings view has a text field for org ID",
-        "Save button stores values to Keychain via KeychainService",
-        "Test connection button hits the API and shows success/failure",
-        "Shows current auth status (connected, expired, not configured)",
-        "Gear icon in popover opens settings",
-        "`xcodebuild build` passes"
-      ],
-      "priority": 8,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-009",
-      "title": "Automatic polling with timer",
-      "description": "Poll the usage API every 5 minutes automatically. Update the menu bar icon and popover data when new results arrive. Handle errors gracefully.",
-      "acceptanceCriteria": [
-        "App polls usage API every 5 minutes after initial fetch",
-        "Menu bar icon updates with new data after each poll",
-        "Popover data updates if open during a poll",
-        "Network errors show error state on icon (exclamation mark)",
-        "Auth errors (401/403) show expired state and prompt to re-auth",
-        "Manual refresh button triggers immediate poll",
-        "If Set-Cookie returns new sessionKey, Keychain is updated",
-        "`xcodebuild build` passes"
-      ],
-      "priority": 9,
-      "passes": true,
-      "notes": "Use Timer.publish or async Task.sleep for polling interval."
-    },
-    {
-      "id": "US-010",
-      "title": "Launch at login",
-      "description": "Add a toggle in settings to launch the app at login using SMAppService (macOS 13+).",
-      "acceptanceCriteria": [
-        "Settings has a 'Launch at Login' toggle",
-        "Toggle uses SMAppService.mainApp to register/unregister",
-        "Toggle reflects current registration state on load",
-        "`xcodebuild build` passes"
-      ],
-      "priority": 10,
-      "passes": true,
-      "notes": "Import ServiceManagement. SMAppService.mainApp.register() / unregister()."
     }
   ]
 }

@@ -34,11 +34,19 @@ class UsageViewModel: ObservableObject {
         case notConfigured
     }
 
+    let accountStore: AccountStore
     private let pollingInterval: TimeInterval = 300 // 5 minutes
     private var pollingTask: Task<Void, Never>?
     private var cancellables = Set<AnyCancellable>()
 
-    init() {
+    /// The email of the currently active account.
+    var activeEmail: String? {
+        accountStore.activeAccount?.email
+    }
+
+    init(accountStore: AccountStore) {
+        self.accountStore = accountStore
+
         // Initialize time display preference from UserDefaults
         let savedFormat = UserDefaults.standard.string(forKey: "claude_time_display_format") ?? TimeDisplayFormat.resetTime.rawValue
         timeDisplayFormat = TimeDisplayFormat(rawValue: savedFormat) ?? .resetTime
@@ -65,8 +73,24 @@ class UsageViewModel: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Start polling if credentials exist
-        startPollingIfConfigured()
+        // Watch for active account changes and restart polling
+        // Note: @Published fires on willSet, so we receive on next runloop tick
+        // to ensure activeAccountId is already updated when we read it.
+        accountStore.$activeAccountId
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                // Cancel existing polling FIRST to prevent stale fetches
+                self.pollingTask?.cancel()
+                self.pollingTask = nil
+                self.usageData = nil
+                self.lastUpdated = nil
+                self.errorState = nil
+                self.updateAuthStatus()
+                self.startPollingIfConfigured()
+            }
+            .store(in: &cancellables)
     }
 
     deinit {
@@ -74,16 +98,27 @@ class UsageViewModel: ObservableObject {
     }
 
     func updateAuthStatus() {
-        let hasKey = KeychainService.read(key: .sessionKey) != nil
-        let hasOrg = KeychainService.read(key: .orgId) != nil
+        guard let account = accountStore.activeAccount else {
+            authStatus = .notConfigured
+            return
+        }
+        // Check both in-memory model and Keychain for credentials
+        let hasKey: Bool = {
+            if let key = account.sessionKey, !key.isEmpty { return true }
+            if let key = accountStore.sessionKey(for: account.id), !key.isEmpty { return true }
+            return false
+        }()
+        let hasOrg: Bool = {
+            if let org = account.orgId, !org.isEmpty { return true }
+            if let org = accountStore.orgId(for: account.id), !org.isEmpty { return true }
+            return false
+        }()
         if hasKey && hasOrg {
             if errorState == .authExpired {
                 authStatus = .expired
-            } else if usageData != nil {
-                authStatus = .connected
             } else {
-                // Credentials exist but haven't verified yet
-                authStatus = .notConfigured
+                // Credentials exist — treat as connected (data fetch in progress or complete)
+                authStatus = .connected
             }
         } else {
             authStatus = .notConfigured
@@ -94,8 +129,9 @@ class UsageViewModel: ObservableObject {
     func startPollingIfConfigured() {
         pollingTask?.cancel()
 
-        guard let sessionKey = KeychainService.read(key: .sessionKey),
-              let orgId = KeychainService.read(key: .orgId),
+        guard let accountId = accountStore.activeAccountId,
+              let sessionKey = accountStore.sessionKey(for: accountId),
+              let orgId = accountStore.orgId(for: accountId),
               !sessionKey.isEmpty, !orgId.isEmpty else {
             return
         }
@@ -103,44 +139,48 @@ class UsageViewModel: ObservableObject {
         pollingTask = Task { [weak self] in
             guard let self = self else { return }
             // Initial fetch
-            await self.performFetch(sessionKey: sessionKey, orgId: orgId)
+            guard !Task.isCancelled, self.accountStore.activeAccountId == accountId else { return }
+            await self.performFetch(sessionKey: sessionKey, orgId: orgId, accountId: accountId)
 
             // Polling loop
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(self.pollingInterval * 1_000_000_000))
                 if Task.isCancelled { break }
+                // Verify this is still the active account
+                guard self.accountStore.activeAccountId == accountId else { break }
                 // Re-read credentials in case they were updated
-                guard let currentKey = KeychainService.read(key: .sessionKey),
-                      let currentOrg = KeychainService.read(key: .orgId) else {
+                guard let currentKey = self.accountStore.sessionKey(for: accountId),
+                      let currentOrg = self.accountStore.orgId(for: accountId) else {
                     break
                 }
-                await self.performFetch(sessionKey: currentKey, orgId: currentOrg)
+                await self.performFetch(sessionKey: currentKey, orgId: currentOrg, accountId: accountId)
             }
         }
     }
 
     /// Triggers an immediate fetch outside the polling cycle.
     func fetchNow() {
-        guard let sessionKey = KeychainService.read(key: .sessionKey),
-              let orgId = KeychainService.read(key: .orgId),
+        guard let accountId = accountStore.activeAccountId,
+              let sessionKey = accountStore.sessionKey(for: accountId),
+              let orgId = accountStore.orgId(for: accountId),
               !sessionKey.isEmpty, !orgId.isEmpty else {
             return
         }
 
         Task { [weak self] in
-            await self?.performFetch(sessionKey: sessionKey, orgId: orgId)
+            await self?.performFetch(sessionKey: sessionKey, orgId: orgId, accountId: accountId)
         }
     }
 
     @MainActor
-    private func performFetch(sessionKey: String, orgId: String) async {
+    private func performFetch(sessionKey: String, orgId: String, accountId: UUID) async {
         let service = UsageService(sessionKey: sessionKey, orgId: orgId)
         do {
             let (data, newKey) = try await service.fetchUsage()
 
             // Update Keychain if a new session key was returned via Set-Cookie
             if let newKey = newKey {
-                KeychainService.save(key: .sessionKey, value: newKey)
+                accountStore.saveSessionKey(newKey, for: accountId)
             }
 
             usageData = data
