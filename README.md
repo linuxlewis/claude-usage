@@ -53,3 +53,8 @@ The app will be at:
 - Session key is stored in the macOS Keychain; org ID in UserDefaults
 - Usage refreshes every 5 minutes
 - Menu bar shows the highest utilization percentage and time display (reset time or remaining time based on user preference)
+- Supports multiple accounts — add, switch, and rename accounts from the popover or settings
+
+## Disclaimer
+
+This project is not affiliated with, endorsed by, or associated with Anthropic, PBC. "Claude" and "Anthropic" are trademarks of Anthropic, PBC. All trademarks belong to their respective owners. This is an independent, unofficial tool that uses undocumented APIs and may stop working at any time.
