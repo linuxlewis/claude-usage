@@ -77,11 +77,15 @@ class UsageViewModel: ObservableObject {
         accountStore.$activeAccountId
             .removeDuplicates()
             .sink { [weak self] _ in
-                self?.usageData = nil
-                self?.lastUpdated = nil
-                self?.errorState = nil
-                self?.updateAuthStatus()
-                self?.startPollingIfConfigured()
+                guard let self = self else { return }
+                // Cancel existing polling FIRST to prevent stale fetches
+                self.pollingTask?.cancel()
+                self.pollingTask = nil
+                self.usageData = nil
+                self.lastUpdated = nil
+                self.errorState = nil
+                self.updateAuthStatus()
+                self.startPollingIfConfigured()
             }
             .store(in: &cancellables)
     }
@@ -124,12 +128,15 @@ class UsageViewModel: ObservableObject {
         pollingTask = Task { [weak self] in
             guard let self = self else { return }
             // Initial fetch
+            guard !Task.isCancelled, self.accountStore.activeAccountId == accountId else { return }
             await self.performFetch(sessionKey: sessionKey, orgId: orgId, accountId: accountId)
 
             // Polling loop
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: UInt64(self.pollingInterval * 1_000_000_000))
                 if Task.isCancelled { break }
+                // Verify this is still the active account
+                guard self.accountStore.activeAccountId == accountId else { break }
                 // Re-read credentials in case they were updated
                 guard let currentKey = self.accountStore.sessionKey(for: accountId),
                       let currentOrg = self.accountStore.orgId(for: accountId) else {

@@ -46,8 +46,15 @@ class AccountStore: ObservableObject {
 
     func setActive(id: UUID) {
         guard accounts.contains(where: { $0.id == id }) else { return }
-        activeAccountId = id
         UserDefaults.standard.set(id.uuidString, forKey: activeAccountKey)
+        // Set @Published property last so subscribers see the updated UserDefaults
+        activeAccountId = id
+    }
+
+    func rename(id: UUID, to newName: String) {
+        guard let index = accounts.firstIndex(where: { $0.id == id }) else { return }
+        accounts[index].email = newName
+        saveAccounts()
     }
 
     func update(_ account: Account) {
