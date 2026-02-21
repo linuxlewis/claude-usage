@@ -10,9 +10,9 @@ A macOS menu bar app that shows your Claude.ai subscription usage limits at a gl
 2. **Unzip** and drag `ClaudeUsage.app` to your Applications folder
 3. **Open** the app (first time: right-click → Open to bypass Gatekeeper since it's not code-signed)
 4. **Click the gear icon** (⚙️) in the menu bar popover to open Settings
-5. **Paste your credentials** (see below)
+5. **Paste your credentials** (see below) and **Save**
 6. **Choose your time display preference** — show either reset time (e.g., "3:45 PM") or remaining time (e.g., "2h 15m")
-7. **Hit Save**
+7. **Add more accounts** (optional) — click the **+** button in the popover to add additional Claude accounts and switch between them
 
 That's it — your usage will appear in the menu bar within seconds.
 
@@ -50,7 +50,7 @@ The app will be at:
 ## Notes
 
 - Uses an **unofficial, undocumented** Claude.ai API endpoint — may break at any time
-- Session key is stored in the macOS Keychain; org ID in UserDefaults
+- Credentials are stored per-account: session keys in the macOS Keychain, org IDs and account metadata in UserDefaults
 - Usage refreshes every 5 minutes
 - Menu bar shows the highest utilization percentage and time display (reset time or remaining time based on user preference)
 - Supports multiple accounts — add, switch, and rename accounts from the popover or settings
