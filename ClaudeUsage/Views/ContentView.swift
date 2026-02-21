@@ -160,6 +160,15 @@ struct ContentView: View {
                 Divider()
 
                 toolbarButtons
+            } else if viewModel.authStatus == .connected {
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Loading usage data…")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .padding()
             } else {
                 VStack(spacing: 12) {
                     Text("Claude Usage")
