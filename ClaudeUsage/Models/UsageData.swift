@@ -10,6 +10,16 @@ struct UsageLimit: Codable, Equatable {
     }
 }
 
+struct ExtraUsage: Codable, Equatable {
+    let isEnabled: Bool
+    let utilization: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case isEnabled = "is_enabled"
+        case utilization
+    }
+}
+
 struct UsageData: Codable, Equatable {
     let fiveHour: UsageLimit
     let sevenDay: UsageLimit
@@ -18,7 +28,7 @@ struct UsageData: Codable, Equatable {
     let sevenDayOauthApps: UsageLimit?
     let sevenDayCowork: UsageLimit?
     let iguanaNecktie: UsageLimit?
-    let extraUsage: UsageLimit?
+    let extraUsage: ExtraUsage?
 
     enum CodingKeys: String, CodingKey {
         case fiveHour = "five_hour"

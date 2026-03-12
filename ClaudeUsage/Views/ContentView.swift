@@ -160,6 +160,27 @@ struct ContentView: View {
                 Divider()
 
                 toolbarButtons
+            } else if viewModel.errorState == .networkError {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.orange)
+                    Text("Network Error")
+                        .font(.headline)
+                    Text("Could not load usage data. Check your credentials and network connection.")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    HStack(spacing: 8) {
+                        Button("Retry") {
+                            viewModel.fetchNow()
+                        }
+                        Button("Open Settings") {
+                            openSettings()
+                        }
+                    }
+                }
+                .padding()
             } else if viewModel.authStatus == .connected {
                 VStack(spacing: 12) {
                     ProgressView()
