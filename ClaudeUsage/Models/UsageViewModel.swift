@@ -209,7 +209,9 @@ class UsageViewModel: ObservableObject {
         if let oa = data.sevenDayOauthApps { limits.append(oa) }
         if let c = data.sevenDayCowork { limits.append(c) }
         if let i = data.iguanaNecktie { limits.append(i) }
-        if let e = data.extraUsage { limits.append(e) }
+        if let e = data.extraUsage, let util = e.utilization {
+            limits.append(UsageLimit(utilization: util, resetsAt: nil))
+        }
         return limits.map(\.utilization).max() ?? 0
     }
 
@@ -240,7 +242,9 @@ class UsageViewModel: ObservableObject {
         if let oa = data.sevenDayOauthApps { results.append(("OAuth Apps", oa)) }
         if let c = data.sevenDayCowork { results.append(("Cowork", c)) }
         if let i = data.iguanaNecktie { results.append(("Other", i)) }
-        if let e = data.extraUsage { results.append(("Extra Usage", e)) }
+        if let e = data.extraUsage, let util = e.utilization {
+            results.append(("Extra Usage", UsageLimit(utilization: util, resetsAt: nil)))
+        }
         return results
     }
 
